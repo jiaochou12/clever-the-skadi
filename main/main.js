@@ -8,7 +8,7 @@ let baseURL = '';
 let petWin = null;
 let settingsWin = null;
 let animNames = [];               // 渲染进程加载模型后上报的动画列表
-const petState = { dragging: false, chatActive: false, oneShot: false, randomWalkAnim: null };
+const petState = { dragging: false, chatActive: false, oneShot: false, walking: false };
 let walkDir = 1;
 const WALK_TICK = 33;
 const PET_W = 480;
@@ -70,6 +70,15 @@ function createPetWindow() {
   petWin.webContents.on('render-process-gone', (e, details) => {
     console.error('[pet] renderer gone:', details && details.reason);
   });
+  petWin.webContents.on('did-finish-load', () => {
+    // 渲染层 20 秒内未上报动画列表则自动重载一次（防启动竞态）
+    setTimeout(() => {
+      if (animNames.length === 0 && petWin && !petWin.isDestroyed()) {
+        console.log('[pet] renderer not ready, reloading...');
+        petWin.webContents.reload();
+      }
+    }, 20000);
+  });
   // 初始为可穿透：等渲染进程报告鼠标位于模型上时才取消穿透
   petWin.setIgnoreMouseEvents(true, { forward: true });
 }
@@ -107,9 +116,8 @@ function broadcast(channel, payload) {
 function startWalkLoop() {
   setInterval(() => {
     if (!petWin || petWin.isDestroyed()) return;
+    if (!petState.walking || petState.dragging || petState.chatActive || petState.oneShot) return;
     const cfg = config.get();
-    const walking = cfg.model.mode === 'walk' || petState.randomWalkAnim != null;
-    if (!walking || petState.dragging || petState.chatActive || petState.oneShot) return;
     const [x, y] = petWin.getPosition();
     const step = Math.max(1, Math.round((Number(cfg.model.speed) || 90) * WALK_TICK / 1000));
     let nx = x + walkDir * step;
@@ -134,13 +142,6 @@ function registerIpc() {
   });
   ipcMain.handle('config:reset', () => {
     const cfg = config.reset();
-    broadcast('config:changed', cfg);
-    return cfg;
-  });
-
-  ipcMain.handle('mode:set', (e, mode) => {
-    if (!['idle', 'walk', 'lie', 'random'].includes(mode)) return config.get();
-    const cfg = config.save({ model: { mode } });
     broadcast('config:changed', cfg);
     return cfg;
   });

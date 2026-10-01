@@ -17,11 +17,10 @@ function defaults() {
     },
     model: {
       scale: 1.0,         // 0.6 ~ 1.6
-      mode: 'idle',       // idle | walk | lie | random
       speed: 90,          // 走路速度 px/s
       randomMinSec: 6,    // 随机动作最小间隔（秒）
       randomMaxSec: 15,   // 随机动作最大间隔（秒）
-      anims: { idle: 'Default', walk: 'Move', lie: 'Sleep' }
+      action: 'Default'   // 当前动作：动画名，'random' 为随机动作
     },
     bubble: {
       bg: '#ffffff',
@@ -54,12 +53,24 @@ let cfg = null;
 
 function load() {
   cfg = defaults();
+  let raw = null;
   try {
-    const raw = fs.readFileSync(file(), 'utf-8');
-    deepMerge(cfg, JSON.parse(raw));
+    raw = JSON.parse(fs.readFileSync(file(), 'utf-8'));
   } catch (e) {
-    // 首次运行或文件损坏，使用默认值
+    raw = null;
   }
+  if (raw) deepMerge(cfg, raw);
+  // 迁移 v1.1.0 之前的结构：mode(idle/walk/lie/random) + anims 映射 → action
+  if (raw && raw.model && raw.model.mode && !raw.model.action) {
+    const m = raw.model.mode;
+    const a = raw.model.anims || {};
+    if (m === 'random') cfg.model.action = 'random';
+    else if (m === 'walk' && a.walk) cfg.model.action = a.walk;
+    else if (m === 'lie' && a.lie) cfg.model.action = a.lie;
+    else if (a.idle) cfg.model.action = a.idle;
+  }
+  delete cfg.model.mode;
+  delete cfg.model.anims;
   return cfg;
 }
 

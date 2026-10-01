@@ -6,12 +6,9 @@ const H = 700;
 const MODEL_BASE = '/assets/models/skadi2/';
 const SKEL_FILE = 'skadi2.skel';
 
-// 动画自动映射优先级（模型实际动画以运行时解析为准）
-const ANIM_PRIORITY = {
-  idle: ['Default', 'Idle', 'Relax', 'Stand', 'Idle_1'],
-  walk: ['Move', 'Walk', 'Run'],
-  lie: ['Sleep', 'Lie', 'Sit', 'Down', 'Relax']
-};
+// 走路动画与回落动画的识别优先级
+const WALK_ANIMS = ['Move', 'Walk', 'Run'];
+const FALLBACK_ANIMS = ['Default', 'Idle', 'Relax', 'Stand'];
 
 let cfg = null;
 let app = null;
@@ -23,7 +20,7 @@ let refBox = null; // 当前动画一整圈的包围盒并集（本地坐标）
 let facing = 1;    // 走路朝向：1 右，-1 左
 let modelRect = { x: 0, y: 0, w: 0, h: 0 };
 
-let baseMode = 'idle';   // idle | walk | lie | random
+let action = 'Default';  // 当前动作：动画名或 'random'
 let oneShotName = null;  // 正在播放的单次动画
 let randomTimer = null;
 let lastRandomName = null;
@@ -58,7 +55,6 @@ boot().catch((e) => console.error('boot failed: ' + (e && e.stack || e)));
 
 async function boot() {
   cfg = await window.pet.getConfig();
-  baseMode = ['idle', 'walk', 'lie', 'random'].includes(cfg.model.mode) ? cfg.model.mode : 'idle';
   buildApp();
   try {
     await loadModel();
@@ -109,37 +105,20 @@ async function loadModel() {
   window.pet.reportAnims(animNames);
   spine.state.addListener({
     complete: (entry) => {
-      // 单次动画播完后回到当前模式的基础动画
+      // 单次动画播完后回到当前动作
       if (oneShotName && entry && entry.animation && entry.animation.name === oneShotName) {
         oneShotName = null;
         window.pet.setState({ oneShot: false });
-        playState(animForBase(baseMode));
+        playState(action === 'random' ? fallbackAnim() : action);
       }
     }
   });
-  ensureAnimMapping();
   setupMixes();
-  playMode(baseMode);
+  applyAction(cfg.model.action || 'Default');
   measureRefBox();
   applyScale();
-  populateAnimsMenu();
   window.__pet.loaded = true;
   window.__pet.anims = animNames;
-}
-
-function ensureAnimMapping() {
-  const anims = cfg.model.anims;
-  let changed = false;
-  for (const key of Object.keys(ANIM_PRIORITY)) {
-    if (!animNames.includes(anims[key])) {
-      const pick = ANIM_PRIORITY[key].find((n) => animNames.includes(n));
-      anims[key] = pick || animNames[0] || anims[key];
-      changed = true;
-    }
-  }
-  if (changed) {
-    window.pet.saveConfig({ model: { anims } });
-  }
 }
 
 function setupMixes() {
@@ -211,16 +190,16 @@ function positionBubble() {
 
 /* ---------------- 动作控制 ---------------- */
 
-function isStateAnim(name) {
-  const a = cfg.model.anims;
-  return name === a.idle || name === a.walk || name === a.lie;
+function walkAnimName() {
+  return WALK_ANIMS.find((n) => animNames.includes(n));
 }
 
-function animForBase(mode) {
-  const a = cfg.model.anims;
-  if (mode === 'walk') return a.walk;
-  if (mode === 'lie') return a.lie;
-  return a.idle; // idle 与 random 的回落动画
+function fallbackAnim() {
+  return FALLBACK_ANIMS.find((n) => animNames.includes(n)) || animNames[0];
+}
+
+function setWalking(flag) {
+  window.pet.setState({ walking: !!flag });
 }
 
 function playState(name) {
@@ -230,7 +209,7 @@ function playState(name) {
   spine.state.setAnimation(0, name, true);
 }
 
-// 播放单次动画，播完回落到当前模式的基础动画
+// 播放单次动画，播完回到当前动作
 function playOnce(name) {
   if (!spine || !animNames.includes(name)) return;
   oneShotName = name;
@@ -239,31 +218,26 @@ function playOnce(name) {
   spine.state.setAnimation(0, name, false);
 }
 
-// 切换基础模式：idle / walk / lie / random
-function playMode(mode) {
+// 应用当前动作：动画名循环播放，'random' 进入随机模式
+function applyAction(next) {
   if (!spine) return;
-  baseMode = ['idle', 'walk', 'lie', 'random'].includes(mode) ? mode : 'idle';
-  if (baseMode === 'random') {
+  action = next === 'random' ? 'random' : (animNames.includes(next) ? next : fallbackAnim());
+  if (action === 'random') {
     randomSegment();
   } else {
     stopRandom();
-    playState(animForBase(baseMode));
+    setWalking(action === walkAnimName());
+    playState(action);
   }
 }
 
 function randomSegment() {
-  if (baseMode !== 'random' || !animNames.length) return;
+  if (action !== 'random' || !animNames.length) return;
   const pool = animNames.filter((n) => n !== lastRandomName);
   const name = pool.length ? pool[Math.floor(Math.random() * pool.length)] : animNames[0];
   lastRandomName = name;
-  const walkAnim = cfg.model.anims.walk;
-  // 随机到走路动画时让窗口真正走动
-  window.pet.setState({ randomWalkAnim: name === walkAnim ? name : null });
-  if (name === walkAnim || isStateAnim(name)) {
-    playState(name);
-  } else {
-    playOnce(name);
-  }
+  setWalking(name === walkAnimName());
+  playState(name);
   scheduleRandom();
 }
 
@@ -274,28 +248,14 @@ function scheduleRandom() {
   if (hi < lo) [lo, hi] = [hi, lo];
   const sec = lo + Math.random() * Math.max(0, hi - lo);
   randomTimer = setTimeout(() => {
-    if (baseMode === 'random') randomSegment();
+    if (action === 'random') randomSegment();
   }, sec * 1000);
 }
 
 function stopRandom() {
   clearTimeout(randomTimer);
   randomTimer = null;
-  window.pet.setState({ randomWalkAnim: null });
-}
-
-// 右键菜单 / 设置窗口里的动画列表
-function populateAnimsMenu() {
-  const box = $('animitems');
-  if (!box) return;
-  box.innerHTML = '';
-  for (const n of animNames) {
-    const d = document.createElement('div');
-    d.className = 'mi';
-    d.dataset.anim = n;
-    d.textContent = n;
-    box.appendChild(d);
-  }
+  setWalking(false);
 }
 
 /* ---------------- 事件订阅 ---------------- */
@@ -350,17 +310,11 @@ function onConfigChanged(next) {
   const prev = cfg;
   cfg = next;
   applyBubbleStyle();
-  if (!prev || prev.model.mode !== cfg.model.mode) {
-    playMode(cfg.model.mode);
+  if (!prev || prev.model.action !== cfg.model.action) {
+    applyAction(cfg.model.action);
   }
   if (!prev || prev.model.scale !== cfg.model.scale) {
     applyScale();
-  }
-  if (!prev || JSON.stringify(prev.model.anims) !== JSON.stringify(cfg.model.anims)) {
-    ensureAnimMapping();
-    setupMixes();
-    currentAnimName = null;
-    playMode(baseMode);
   }
 }
 
@@ -469,18 +423,11 @@ function bindUI() {
   });
 
   ctxMenuEl.addEventListener('click', (e) => {
-    const t = e.target;
-    if (t.dataset && t.dataset.anim) {
-      hideMenu();
-      playOnce(t.dataset.anim);
-      return;
-    }
-    const act = t.dataset && t.dataset.act;
+    const act = e.target.dataset && e.target.dataset.act;
     if (!act) return;
     hideMenu();
     if (act === 'settings') window.pet.openSettings();
     else if (act === 'quit') window.pet.quitApp();
-    else if (['idle', 'walk', 'lie', 'random'].includes(act)) window.pet.setMode(act);
   });
 
   window.addEventListener('blur', hideMenu);

@@ -102,31 +102,15 @@
     <h2>模型动作</h2>
     <div class="row">
       <label>当前动作</label>
-      <select id="mode">
-        <option value="idle">站立（待机）</option>
-        <option value="walk">走路</option>
-        <option value="lie">卧倒</option>
-        <option value="random">随机动作</option>
-      </select>
+      <select id="action"></select>
     </div>
+    <div class="hint">列出模型支持的全部动画；选择"走路"时模型会在屏幕上行走，到边缘自动折返</div>
     <div class="row">
       <label>单次动作</label>
       <select id="onceAnim"></select>
       <button id="playOnceBtn">播放</button>
     </div>
-    <div class="hint">播放一次模型支持的任一动画，播完自动回到当前基础动作</div>
-    <div class="row">
-      <label>站立动画</label>
-      <select id="animIdle"></select>
-    </div>
-    <div class="row">
-      <label>走路动画</label>
-      <select id="animWalk"></select>
-    </div>
-    <div class="row">
-      <label>卧倒动画</label>
-      <select id="animLie"></select>
-    </div>
+    <div class="hint">播放一次选中的动画，播完自动回到当前动作</div>
     <div class="row">
       <label>随机最小间隔</label>
       <input type="range" id="randomMinSec" min="2" max="60" step="1" />
@@ -137,7 +121,7 @@
       <input type="range" id="randomMaxSec" min="2" max="120" step="1" />
       <span class="val" id="randomMaxSecVal"></span>
     </div>
-    <div class="hint">随机动作模式下，每隔一段随机时间自动切换一个随机动画；最小间隔大于最大间隔时保存会自动交换</div>
+    <div class="hint">当前动作为"随机动作"时，每隔一段随机时间自动切换一个随机动画；最小间隔大于最大间隔时保存会自动交换</div>
     <div class="row">
       <label>走路速度</label>
       <input type="range" id="speed" min="20" max="300" step="5" />

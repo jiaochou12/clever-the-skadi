@@ -11,7 +11,6 @@ contextBridge.exposeInMainWorld('pet', {
   saveConfig: (partial) => ipcRenderer.invoke('config:save', partial),
   resetConfig: () => ipcRenderer.invoke('config:reset'),
   // 模式与模型
-  setMode: (mode) => ipcRenderer.invoke('mode:set', mode),
   playAnim: (name) => ipcRenderer.send('anim:playOnce', name),
   reportAnims: (names) => ipcRenderer.send('model:anims', names),
   getAnims: () => ipcRenderer.invoke('model:getAnims'),

@@ -1,17 +1,26 @@
 /* 设置窗口逻辑：读取配置 → 填表单 → 保存应用 */
 const $ = (id) => document.getElementById(id);
 
+// 动画名汉化（未收录的动画显示原始英文名）
+const ANIM_CN = {
+  Default: '站立',
+  Interact: '互动',
+  Move: '走路',
+  Relax: '放松',
+  Sit: '坐下',
+  Sleep: '睡觉',
+  Special: '特殊'
+};
+const animLabel = (n) => ANIM_CN[n] || n;
+
 const fields = {
   baseUrl: $('baseUrl'),
   apiKey: $('apiKey'),
   model: $('model'),
   systemPrompt: $('systemPrompt'),
   temperature: $('temperature'),
-  mode: $('mode'),
+  action: $('action'),
   onceAnim: $('onceAnim'),
-  animIdle: $('animIdle'),
-  animWalk: $('animWalk'),
-  animLie: $('animLie'),
   randomMinSec: $('randomMinSec'),
   randomMaxSec: $('randomMaxSec'),
   speed: $('speed'),
@@ -41,20 +50,27 @@ function showVal(id, text) {
   if (el) el.textContent = text;
 }
 
-function fillAnims(anims, cfgAnims) {
-  const list = anims && anims.length ? anims : [cfgAnims.idle, cfgAnims.walk, cfgAnims.lie];
-  for (const sel of [fields.animIdle, fields.animWalk, fields.animLie, fields.onceAnim]) {
-    sel.innerHTML = '';
-    for (const n of list) {
-      const opt = document.createElement('option');
-      opt.value = n;
-      opt.textContent = n;
-      sel.appendChild(opt);
-    }
+function fillOptions(sel, list) {
+  sel.innerHTML = '';
+  for (const n of list) {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = animLabel(n);
+    sel.appendChild(opt);
   }
-  fields.animIdle.value = list.includes(cfgAnims.idle) ? cfgAnims.idle : list[0];
-  fields.animWalk.value = list.includes(cfgAnims.walk) ? cfgAnims.walk : list[0];
-  fields.animLie.value = list.includes(cfgAnims.lie) ? cfgAnims.lie : list[0];
+}
+
+// 填充动作下拉框：全部动画 + 随机动作
+function fillActions(anims, current) {
+  const list = anims && anims.length ? anims : [current === 'random' ? 'Default' : (current || 'Default')];
+  fillOptions(fields.action, list);
+  const ro = document.createElement('option');
+  ro.value = 'random';
+  ro.textContent = '随机动作';
+  fields.action.appendChild(ro);
+  const cur = current === 'random' ? 'random' : (list.includes(current) ? current : list[0]);
+  fillValue('action', cur);
+  fillOptions(fields.onceAnim, list);
   fillValue('onceAnim', list[0]);
 }
 
@@ -67,7 +83,6 @@ async function load() {
   fillValue('temperature', cfg.api.temperature);
   showVal('temperature', cfg.api.temperature);
 
-  fillValue('mode', cfg.model.mode);
   fillValue('speed', cfg.model.speed);
   showVal('speed', cfg.model.speed + ' px/s');
   fillValue('scale', cfg.model.scale);
@@ -76,7 +91,7 @@ async function load() {
   showVal('randomMinSec', cfg.model.randomMinSec + 's');
   fillValue('randomMaxSec', cfg.model.randomMaxSec);
   showVal('randomMaxSec', cfg.model.randomMaxSec + 's');
-  fillAnims(await window.pet.getAnims(), cfg.model.anims);
+  fillActions(await window.pet.getAnims(), cfg.model.action);
 
   fillValue('bg', cfg.bubble.bg);
   fillValue('color', cfg.bubble.color);
@@ -101,16 +116,11 @@ function collect() {
       temperature: Number(fields.temperature.value)
     },
     model: {
-      mode: fields.mode.value,
+      action: fields.action.value,
       speed: Number(fields.speed.value),
       scale: Number(fields.scale.value),
       randomMinSec: lo,
-      randomMaxSec: hi,
-      anims: {
-        idle: fields.animIdle.value,
-        walk: fields.animWalk.value,
-        lie: fields.animLie.value
-      }
+      randomMaxSec: hi
     },
     bubble: {
       bg: fields.bg.value,
@@ -158,6 +168,11 @@ $('testBtn').addEventListener('click', async () => {
   el.style.color = r.ok ? '#3d9a6c' : '#c0574f';
 });
 
+async function save() {
+  await window.pet.saveConfig(collect());
+  toast('已保存并应用');
+}
+
 $('saveBtn').addEventListener('click', save);
 
 $('closeBtn').addEventListener('click', () => window.pet.closeSettings());
@@ -177,18 +192,13 @@ $('resetBtn').addEventListener('click', async () => {
 // 主进程推送：模型动画列表解析完成后刷新下拉框
 window.pet.on('model:anims-changed', async () => {
   const cfg = await window.pet.getConfig();
-  fillAnims(await window.pet.getAnims(), cfg.model.anims);
+  fillActions(await window.pet.getAnims(), cfg.model.action);
 });
 
 // 桌宠端改了动作时同步表单
 window.pet.on('config:changed', (cfg) => {
   if (!cfg) return;
-  fillValue('mode', cfg.model.mode);
+  fillValue('action', cfg.model.action);
 });
-
-async function save() {
-  await window.pet.saveConfig(collect());
-  toast('已保存并应用');
-}
 
 load();
