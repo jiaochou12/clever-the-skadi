@@ -24,7 +24,7 @@ html, body {
   --fs: 15px;
 
   position: absolute;
-  top: 10px;
+  bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
   width: 92%;
@@ -36,13 +36,12 @@ html, body {
   padding: 10px 12px 8px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
   font-size: var(--fs);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease;
   z-index: 10;
 }
 
 #bubble.hidden {
   opacity: 0;
-  transform: translateX(-50%) translateY(-12px);
   pointer-events: none;
 }
 
@@ -108,9 +107,9 @@ html, body {
   border-radius: 8px;
   background: #6c8fb5;
   color: #fff;
-  width: 38px;
+  padding: 0 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 #send:hover { background: #58799c; }

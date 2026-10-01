@@ -23,6 +23,11 @@ let refBox = null; // 当前动画一整圈的包围盒并集（本地坐标）
 let facing = 1;    // 走路朝向：1 右，-1 左
 let modelRect = { x: 0, y: 0, w: 0, h: 0 };
 
+let baseMode = 'idle';   // idle | walk | lie | random
+let oneShotName = null;  // 正在播放的单次动画
+let randomTimer = null;
+let lastRandomName = null;
+
 let bubbleOpen = false;
 let hideTimer = null;
 let chatBusy = false;
@@ -53,6 +58,7 @@ boot().catch((e) => console.error('boot failed: ' + (e && e.stack || e)));
 
 async function boot() {
   cfg = await window.pet.getConfig();
+  baseMode = ['idle', 'walk', 'lie', 'random'].includes(cfg.model.mode) ? cfg.model.mode : 'idle';
   buildApp();
   try {
     await loadModel();
@@ -87,6 +93,7 @@ function buildApp() {
     if (++rectTick % 30 === 0) {
       const b = spine.getBounds(true);
       modelRect = { x: b.x, y: b.y, w: b.width, h: b.height };
+      positionBubble();
     }
   });
 }
@@ -100,11 +107,22 @@ async function loadModel() {
   animNames = (spineData.animations || []).map((a) => a.name);
   console.log('动画列表: ' + animNames.join(', '));
   window.pet.reportAnims(animNames);
+  spine.state.addListener({
+    complete: (entry) => {
+      // 单次动画播完后回到当前模式的基础动画
+      if (oneShotName && entry && entry.animation && entry.animation.name === oneShotName) {
+        oneShotName = null;
+        window.pet.setState({ oneShot: false });
+        playState(animForBase(baseMode));
+      }
+    }
+  });
   ensureAnimMapping();
   setupMixes();
-  playMode(cfg.model.mode);
+  playMode(baseMode);
   measureRefBox();
   applyScale();
+  populateAnimsMenu();
   window.__pet.loaded = true;
   window.__pet.anims = animNames;
 }
@@ -175,15 +193,109 @@ function applyScale() {
   );
   const b2 = spine.getBounds(true);
   modelRect = { x: b2.x, y: b2.y, w: b2.width, h: b2.height };
+  positionBubble();
 }
 
-function playMode(mode) {
-  if (!spine || !animNames.length) return;
-  let name = (cfg.model.anims || {})[mode] || cfg.model.anims.idle;
-  if (!animNames.includes(name)) name = animNames[0];
-  if (!name || currentAnimName === name) return;
+// 气泡底边严格位于模型实际顶部上方 1/6 模型高度处
+function positionBubble() {
+  const gap = modelRect.h / 6;
+  const bottomEdge = modelRect.y - gap;
+  bubbleEl.style.bottom = (H - bottomEdge) + 'px';
+  bubbleEl.style.top = 'auto';
+  // 气泡过高时避免顶部越出窗口
+  const top = bubbleEl.getBoundingClientRect().top;
+  if (top < 4) {
+    bubbleEl.style.bottom = (H - 4 - bubbleEl.offsetHeight) + 'px';
+  }
+}
+
+/* ---------------- 动作控制 ---------------- */
+
+function isStateAnim(name) {
+  const a = cfg.model.anims;
+  return name === a.idle || name === a.walk || name === a.lie;
+}
+
+function animForBase(mode) {
+  const a = cfg.model.anims;
+  if (mode === 'walk') return a.walk;
+  if (mode === 'lie') return a.lie;
+  return a.idle; // idle 与 random 的回落动画
+}
+
+function playState(name) {
+  if (!spine || !animNames.includes(name)) return;
+  if (currentAnimName === name && oneShotName == null) return;
   currentAnimName = name;
   spine.state.setAnimation(0, name, true);
+}
+
+// 播放单次动画，播完回落到当前模式的基础动画
+function playOnce(name) {
+  if (!spine || !animNames.includes(name)) return;
+  oneShotName = name;
+  currentAnimName = name;
+  window.pet.setState({ oneShot: true });
+  spine.state.setAnimation(0, name, false);
+}
+
+// 切换基础模式：idle / walk / lie / random
+function playMode(mode) {
+  if (!spine) return;
+  baseMode = ['idle', 'walk', 'lie', 'random'].includes(mode) ? mode : 'idle';
+  if (baseMode === 'random') {
+    randomSegment();
+  } else {
+    stopRandom();
+    playState(animForBase(baseMode));
+  }
+}
+
+function randomSegment() {
+  if (baseMode !== 'random' || !animNames.length) return;
+  const pool = animNames.filter((n) => n !== lastRandomName);
+  const name = pool.length ? pool[Math.floor(Math.random() * pool.length)] : animNames[0];
+  lastRandomName = name;
+  const walkAnim = cfg.model.anims.walk;
+  // 随机到走路动画时让窗口真正走动
+  window.pet.setState({ randomWalkAnim: name === walkAnim ? name : null });
+  if (name === walkAnim || isStateAnim(name)) {
+    playState(name);
+  } else {
+    playOnce(name);
+  }
+  scheduleRandom();
+}
+
+function scheduleRandom() {
+  clearTimeout(randomTimer);
+  let lo = Number(cfg.model.randomMinSec) || 6;
+  let hi = Number(cfg.model.randomMaxSec) || 15;
+  if (hi < lo) [lo, hi] = [hi, lo];
+  const sec = lo + Math.random() * Math.max(0, hi - lo);
+  randomTimer = setTimeout(() => {
+    if (baseMode === 'random') randomSegment();
+  }, sec * 1000);
+}
+
+function stopRandom() {
+  clearTimeout(randomTimer);
+  randomTimer = null;
+  window.pet.setState({ randomWalkAnim: null });
+}
+
+// 右键菜单 / 设置窗口里的动画列表
+function populateAnimsMenu() {
+  const box = $('animitems');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const n of animNames) {
+    const d = document.createElement('div');
+    d.className = 'mi';
+    d.dataset.anim = n;
+    d.textContent = n;
+    box.appendChild(d);
+  }
 }
 
 /* ---------------- 事件订阅 ---------------- */
@@ -193,6 +305,9 @@ function subscribe() {
   window.pet.on('walk:dir', (dir) => {
     facing = dir >= 0 ? 1 : -1;
     applyScale();
+  });
+  window.pet.on('anim:play', (name) => {
+    if (animNames.includes(name)) playOnce(name);
   });
   window.pet.on('llm:chunk', ({ id, delta }) => {
     const p = pendingReplies.get(id);
@@ -245,7 +360,7 @@ function onConfigChanged(next) {
     ensureAnimMapping();
     setupMixes();
     currentAnimName = null;
-    playMode(cfg.model.mode);
+    playMode(baseMode);
   }
 }
 
@@ -354,12 +469,18 @@ function bindUI() {
   });
 
   ctxMenuEl.addEventListener('click', (e) => {
-    const act = e.target.dataset && e.target.dataset.act;
+    const t = e.target;
+    if (t.dataset && t.dataset.anim) {
+      hideMenu();
+      playOnce(t.dataset.anim);
+      return;
+    }
+    const act = t.dataset && t.dataset.act;
     if (!act) return;
     hideMenu();
     if (act === 'settings') window.pet.openSettings();
     else if (act === 'quit') window.pet.quitApp();
-    else if (['idle', 'walk', 'lie'].includes(act)) window.pet.setMode(act);
+    else if (['idle', 'walk', 'lie', 'random'].includes(act)) window.pet.setMode(act);
   });
 
   window.addEventListener('blur', hideMenu);

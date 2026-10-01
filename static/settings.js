@@ -8,9 +8,12 @@ const fields = {
   systemPrompt: $('systemPrompt'),
   temperature: $('temperature'),
   mode: $('mode'),
+  onceAnim: $('onceAnim'),
   animIdle: $('animIdle'),
   animWalk: $('animWalk'),
   animLie: $('animLie'),
+  randomMinSec: $('randomMinSec'),
+  randomMaxSec: $('randomMaxSec'),
   speed: $('speed'),
   scale: $('scale'),
   bg: $('bg'),
@@ -40,7 +43,7 @@ function showVal(id, text) {
 
 function fillAnims(anims, cfgAnims) {
   const list = anims && anims.length ? anims : [cfgAnims.idle, cfgAnims.walk, cfgAnims.lie];
-  for (const sel of [fields.animIdle, fields.animWalk, fields.animLie]) {
+  for (const sel of [fields.animIdle, fields.animWalk, fields.animLie, fields.onceAnim]) {
     sel.innerHTML = '';
     for (const n of list) {
       const opt = document.createElement('option');
@@ -52,6 +55,7 @@ function fillAnims(anims, cfgAnims) {
   fields.animIdle.value = list.includes(cfgAnims.idle) ? cfgAnims.idle : list[0];
   fields.animWalk.value = list.includes(cfgAnims.walk) ? cfgAnims.walk : list[0];
   fields.animLie.value = list.includes(cfgAnims.lie) ? cfgAnims.lie : list[0];
+  fillValue('onceAnim', list[0]);
 }
 
 async function load() {
@@ -68,6 +72,10 @@ async function load() {
   showVal('speed', cfg.model.speed + ' px/s');
   fillValue('scale', cfg.model.scale);
   showVal('scale', Math.round(cfg.model.scale * 100) + '%');
+  fillValue('randomMinSec', cfg.model.randomMinSec);
+  showVal('randomMinSec', cfg.model.randomMinSec + 's');
+  fillValue('randomMaxSec', cfg.model.randomMaxSec);
+  showVal('randomMaxSec', cfg.model.randomMaxSec + 's');
   fillAnims(await window.pet.getAnims(), cfg.model.anims);
 
   fillValue('bg', cfg.bubble.bg);
@@ -81,6 +89,9 @@ async function load() {
 }
 
 function collect() {
+  let lo = Number(fields.randomMinSec.value);
+  let hi = Number(fields.randomMaxSec.value);
+  if (hi < lo) [lo, hi] = [hi, lo];
   return {
     api: {
       baseUrl: fields.baseUrl.value.trim(),
@@ -93,6 +104,8 @@ function collect() {
       mode: fields.mode.value,
       speed: Number(fields.speed.value),
       scale: Number(fields.scale.value),
+      randomMinSec: lo,
+      randomMaxSec: hi,
       anims: {
         idle: fields.animIdle.value,
         walk: fields.animWalk.value,
@@ -109,13 +122,8 @@ function collect() {
   };
 }
 
-async function save() {
-  await window.pet.saveConfig(collect());
-  toast('已保存并应用 ✓');
-}
-
 // 滑块数值实时显示
-for (const id of ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec']) {
+for (const id of ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec', 'randomMinSec', 'randomMaxSec']) {
   fields[id].addEventListener('input', () => {
     const v = Number(fields[id].value);
     if (id === 'speed') showVal(id, v + ' px/s');
@@ -123,12 +131,20 @@ for (const id of ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoH
     else if (id === 'opacity') showVal(id, v + '%');
     else if (id === 'fontSize') showVal(id, v + 'px');
     else if (id === 'autoHideSec') showVal(id, v === 0 ? '不隐藏' : v + 's');
+    else if (id === 'randomMinSec' || id === 'randomMaxSec') showVal(id, v + 's');
     else showVal(id, v);
   });
 }
 
 $('eye').addEventListener('click', () => {
-  fields.apiKey.type = fields.apiKey.type === 'password' ? 'text' : 'password';
+  const hidden = fields.apiKey.type === 'password';
+  fields.apiKey.type = hidden ? 'text' : 'password';
+  $('eye').textContent = hidden ? '隐藏' : '显示';
+});
+
+$('playOnceBtn').addEventListener('click', () => {
+  const name = fields.onceAnim.value;
+  if (name) window.pet.playAnim(name);
 });
 
 $('testBtn').addEventListener('click', async () => {
@@ -169,5 +185,10 @@ window.pet.on('config:changed', (cfg) => {
   if (!cfg) return;
   fillValue('mode', cfg.model.mode);
 });
+
+async function save() {
+  await window.pet.saveConfig(collect());
+  toast('已保存并应用');
+}
 
 load();

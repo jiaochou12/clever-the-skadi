@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 const ON_CHANNELS = [
   'llm:chunk', 'llm:done', 'llm:error',
-  'config:changed', 'walk:dir', 'model:anims-changed', 'chat:cleared'
+  'config:changed', 'walk:dir', 'model:anims-changed', 'chat:cleared', 'anim:play'
 ];
 
 contextBridge.exposeInMainWorld('pet', {
@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('pet', {
   resetConfig: () => ipcRenderer.invoke('config:reset'),
   // 模式与模型
   setMode: (mode) => ipcRenderer.invoke('mode:set', mode),
+  playAnim: (name) => ipcRenderer.send('anim:playOnce', name),
   reportAnims: (names) => ipcRenderer.send('model:anims', names),
   getAnims: () => ipcRenderer.invoke('model:getAnims'),
   // 窗口交互

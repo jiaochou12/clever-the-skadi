@@ -13,18 +13,20 @@
     <div id="chatlog"></div>
     <div id="inputrow">
       <input id="chatin" type="text" placeholder="想问点什么…（Enter 发送）" autocomplete="off" />
-      <button id="send" title="发送">➤</button>
+      <button id="send" title="发送">发送</button>
     </div>
   </div>
 
   <div id="ctxmenu" class="hidden">
-    <div class="mi" data-act="settings">⚙ 设置…</div>
+    <div class="mi" data-act="idle">站立</div>
+    <div class="mi" data-act="walk">走路</div>
+    <div class="mi" data-act="lie">卧倒</div>
+    <div class="mi" data-act="random">随机动作</div>
     <div class="sep"></div>
-    <div class="mi" data-act="idle">🧍 站立</div>
-    <div class="mi" data-act="walk">🚶 走路</div>
-    <div class="mi" data-act="lie">🛌 卧倒</div>
+    <div id="animitems"></div>
     <div class="sep"></div>
-    <div class="mi" data-act="quit">✖ 退出</div>
+    <div class="mi" data-act="settings">设置…</div>
+    <div class="mi" data-act="quit">退出</div>
   </div>
 
   <script src="/static/bundle.js"></script>

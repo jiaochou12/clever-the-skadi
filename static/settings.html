@@ -64,7 +64,7 @@
   </style>
 </head>
 <body>
-  <h1>⚙ 桌宠设置</h1>
+  <h1>桌宠设置</h1>
 
   <div class="card">
     <h2>API 设置（OpenAI 兼容接口）</h2>
@@ -76,7 +76,7 @@
     <div class="row">
       <label>API Key</label>
       <input type="password" id="apiKey" placeholder="sk-…" />
-      <button class="eye" id="eye" title="显示/隐藏">👁</button>
+      <button class="eye" id="eye" title="显示/隐藏">显示</button>
     </div>
     <div class="row">
       <label>模型名称</label>
@@ -103,11 +103,18 @@
     <div class="row">
       <label>当前动作</label>
       <select id="mode">
-        <option value="idle">🧍 站立（待机）</option>
-        <option value="walk">🚶 走路</option>
-        <option value="lie">🛌 卧倒</option>
+        <option value="idle">站立（待机）</option>
+        <option value="walk">走路</option>
+        <option value="lie">卧倒</option>
+        <option value="random">随机动作</option>
       </select>
     </div>
+    <div class="row">
+      <label>单次动作</label>
+      <select id="onceAnim"></select>
+      <button id="playOnceBtn">播放</button>
+    </div>
+    <div class="hint">播放一次模型支持的任一动画，播完自动回到当前基础动作</div>
     <div class="row">
       <label>站立动画</label>
       <select id="animIdle"></select>
@@ -120,6 +127,17 @@
       <label>卧倒动画</label>
       <select id="animLie"></select>
     </div>
+    <div class="row">
+      <label>随机最小间隔</label>
+      <input type="range" id="randomMinSec" min="2" max="60" step="1" />
+      <span class="val" id="randomMinSecVal"></span>
+    </div>
+    <div class="row">
+      <label>随机最大间隔</label>
+      <input type="range" id="randomMaxSec" min="2" max="120" step="1" />
+      <span class="val" id="randomMaxSecVal"></span>
+    </div>
+    <div class="hint">随机动作模式下，每隔一段随机时间自动切换一个随机动画；最小间隔大于最大间隔时保存会自动交换</div>
     <div class="row">
       <label>走路速度</label>
       <input type="range" id="speed" min="20" max="300" step="5" />

@@ -8,9 +8,19 @@ let baseURL = '';
 let petWin = null;
 let settingsWin = null;
 let animNames = [];               // 渲染进程加载模型后上报的动画列表
-const petState = { dragging: false, chatActive: false };
+const petState = { dragging: false, chatActive: false, oneShot: false, randomWalkAnim: null };
 let walkDir = 1;
 const WALK_TICK = 33;
+const PET_W = 480;
+const PET_H = 700;
+
+// 把桌宠窗口限制在工作区内（底边不越过任务栏顶边）
+function clampPetPos(x, y) {
+  const wa = screen.getPrimaryDisplay().workArea;
+  const cx = Math.min(Math.max(wa.x, x), wa.x + wa.width - PET_W);
+  const cy = Math.min(Math.max(wa.y, y), wa.y + wa.height - PET_H);
+  return [Math.round(cx), Math.round(cy)];
+}
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -26,11 +36,13 @@ if (!gotLock) {
 }
 
 function createPetWindow() {
+  const wa = screen.getPrimaryDisplay().workArea;
+  const [ix, iy] = clampPetPos(wa.x + wa.width - PET_W - 20, wa.y + wa.height - PET_H);
   petWin = new BrowserWindow({
-    width: 480,
-    height: 700,
-    x: screen.getPrimaryDisplay().workArea.x + screen.getPrimaryDisplay().workArea.width - 500,
-    y: screen.getPrimaryDisplay().workArea.y + screen.getPrimaryDisplay().workArea.height - 692,
+    width: PET_W,
+    height: PET_H,
+    x: ix,
+    y: iy,
     transparent: true,
     frame: false,
     hasShadow: false,
@@ -96,15 +108,15 @@ function startWalkLoop() {
   setInterval(() => {
     if (!petWin || petWin.isDestroyed()) return;
     const cfg = config.get();
-    if (cfg.model.mode !== 'walk' || petState.dragging || petState.chatActive) return;
+    const walking = cfg.model.mode === 'walk' || petState.randomWalkAnim != null;
+    if (!walking || petState.dragging || petState.chatActive || petState.oneShot) return;
     const [x, y] = petWin.getPosition();
-    const { width: w } = petWin.getBounds();
-    const wa = screen.getPrimaryDisplay().workArea;
     const step = Math.max(1, Math.round((Number(cfg.model.speed) || 90) * WALK_TICK / 1000));
     let nx = x + walkDir * step;
+    const wa = screen.getPrimaryDisplay().workArea;
     if (nx <= wa.x) { nx = wa.x; flipWalk(1); }
-    else if (nx + w >= wa.x + wa.width) { nx = wa.x + wa.width - w; flipWalk(-1); }
-    petWin.setPosition(nx, y);
+    else if (nx + PET_W >= wa.x + wa.width) { nx = wa.x + wa.width - PET_W; flipWalk(-1); }
+    petWin.setPosition(...clampPetPos(nx, y));
   }, WALK_TICK);
 }
 
@@ -127,10 +139,14 @@ function registerIpc() {
   });
 
   ipcMain.handle('mode:set', (e, mode) => {
-    if (!['idle', 'walk', 'lie'].includes(mode)) return config.get();
+    if (!['idle', 'walk', 'lie', 'random'].includes(mode)) return config.get();
     const cfg = config.save({ model: { mode } });
     broadcast('config:changed', cfg);
     return cfg;
+  });
+
+  ipcMain.on('anim:playOnce', (e, name) => {
+    if (petWin && !petWin.isDestroyed()) petWin.webContents.send('anim:play', String(name || ''));
   });
 
   ipcMain.handle('model:getAnims', () => animNames);
@@ -154,7 +170,7 @@ function registerIpc() {
   ipcMain.on('win:dragMove', (e, dx, dy) => {
     if (!petWin || petWin.isDestroyed()) return;
     const [x, y] = petWin.getPosition();
-    petWin.setPosition(x + Math.round(dx), y + Math.round(dy));
+    petWin.setPosition(...clampPetPos(x + Math.round(dx), y + Math.round(dy)));
   });
   ipcMain.on('win:dragEnd', () => { petState.dragging = false; });
 

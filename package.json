@@ -1,7 +1,7 @@
 {
   "name": "clever-the-skadi",
   "productName": "SkadiPet",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Spine 桌宠：填入 API 即可对话",
   "main": "main/main.js",
   "author": "user",

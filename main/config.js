@@ -17,8 +17,10 @@ function defaults() {
     },
     model: {
       scale: 1.0,         // 0.6 ~ 1.6
-      mode: 'idle',       // idle | walk | lie
+      mode: 'idle',       // idle | walk | lie | random
       speed: 90,          // 走路速度 px/s
+      randomMinSec: 6,    // 随机动作最小间隔（秒）
+      randomMaxSec: 15,   // 随机动作最大间隔（秒）
       anims: { idle: 'Default', walk: 'Move', lie: 'Sleep' }
     },
     bubble: {
