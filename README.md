@@ -28,8 +28,10 @@
 ```bash
 npm install        # 安装依赖
 npm start          # 编译渲染层并启动（开发模式）
-npm run dist       # 打包 portable exe 到 release/
+npm run dist       # 打包 portable exe 到 release/SkadiPet.exe
 ```
+
+成品 exe 不入 git，发布时作为附件挂在 GitHub Release（tag v1）下。
 
 技术栈：Electron + pixi.js 7 + pixi-spine 4（内置 Spine 3.8 runtime）+ esbuild + electron-builder。
 渲染页面由主进程内置的 127.0.0.1 静态服务提供（规避 file:// 限制），LLM 请求由主进程代理（规避 CORS）。

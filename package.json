@@ -9,7 +9,7 @@
   "scripts": {
     "build:renderer": "esbuild src/index.js --bundle --outfile=static/bundle.js",
     "start": "npm run build:renderer && electron .",
-    "dist": "electron-builder --win portable --x64"
+    "dist": "electron-builder --win portable --x64 -c.win.signAndEditExecutable=false"
   },
   "dependencies": {
     "pixi-spine": "^4.0.6",
