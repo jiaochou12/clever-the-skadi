@@ -14,11 +14,11 @@ const WALK_TICK = 33;
 const PET_W = 480;
 const PET_H = 700;
 
-// 把桌宠窗口限制在工作区内（底边不越过任务栏顶边）
+// 把桌宠窗口限制在整个屏幕内（可自由覆盖任务栏区域，但不会被拖出屏幕丢失）
 function clampPetPos(x, y) {
-  const wa = screen.getPrimaryDisplay().workArea;
-  const cx = Math.min(Math.max(wa.x, x), wa.x + wa.width - PET_W);
-  const cy = Math.min(Math.max(wa.y, y), wa.y + wa.height - PET_H);
+  const b = screen.getPrimaryDisplay().bounds;
+  const cx = Math.min(Math.max(b.x, x), b.x + b.width - PET_W);
+  const cy = Math.min(Math.max(b.y, y), b.y + b.height - PET_H);
   return [Math.round(cx), Math.round(cy)];
 }
 
@@ -121,9 +121,9 @@ function startWalkLoop() {
     const [x, y] = petWin.getPosition();
     const step = Math.max(1, Math.round((Number(cfg.model.speed) || 90) * WALK_TICK / 1000));
     let nx = x + walkDir * step;
-    const wa = screen.getPrimaryDisplay().workArea;
-    if (nx <= wa.x) { nx = wa.x; flipWalk(1); }
-    else if (nx + PET_W >= wa.x + wa.width) { nx = wa.x + wa.width - PET_W; flipWalk(-1); }
+    const b = screen.getPrimaryDisplay().bounds;
+    if (nx <= b.x) { nx = b.x; flipWalk(1); }
+    else if (nx + PET_W >= b.x + b.width) { nx = b.x + b.width - PET_W; flipWalk(-1); }
     petWin.setPosition(...clampPetPos(nx, y));
   }, WALK_TICK);
 }
