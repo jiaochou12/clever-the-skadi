@@ -1,0 +1,47 @@
+{
+  "name": "clever-the-skadi",
+  "productName": "SkadiPet",
+  "version": "1.0.0",
+  "description": "Spine 桌宠：填入 API 即可对话",
+  "main": "main/main.js",
+  "author": "user",
+  "license": "MIT",
+  "scripts": {
+    "build:renderer": "esbuild src/index.js --bundle --outfile=static/bundle.js",
+    "start": "npm run build:renderer && electron .",
+    "dist": "electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "pixi-spine": "^4.0.6",
+    "pixi.js": "^7.4.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.0"
+  },
+  "build": {
+    "appId": "com.skadipet.desktop",
+    "productName": "SkadiPet",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main/**",
+      "static/**",
+      "assets/**",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "SkadiPet.exe"
+    }
+  }
+}

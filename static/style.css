@@ -1,0 +1,145 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+#stage, #stage canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- 对话气泡 ---------- */
+#bubble {
+  --bg: #ffffff;
+  --fg: #333333;
+  --op: 0.92;
+  --fs: 15px;
+
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 440px;
+  background: var(--bg);
+  color: var(--fg);
+  opacity: var(--op);
+  border-radius: 14px;
+  padding: 10px 12px 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  font-size: var(--fs);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 10;
+}
+
+#bubble.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+  pointer-events: none;
+}
+
+#chatlog {
+  max-height: 160px;
+  overflow-y: auto;
+  user-select: text;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+#chatlog .msg {
+  margin: 2px 0;
+  line-height: 1.45;
+}
+
+#chatlog .msg.user {
+  color: #7a6a4f;
+  font-size: calc(var(--fs) - 3px);
+  opacity: 0.85;
+}
+
+#chatlog .msg.assistant {
+  font-size: var(--fs);
+}
+
+#chatlog .msg.assistant.thinking::after {
+  content: "…";
+  animation: dots 1s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0% { content: ""; }
+  25% { content: "·"; }
+  50% { content: "··"; }
+  75% { content: "···"; }
+}
+
+#chatlog::-webkit-scrollbar { width: 4px; }
+#chatlog::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+
+#inputrow {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#chatin {
+  flex: 1;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: calc(var(--fs) - 1px);
+  outline: none;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--fg);
+}
+
+#chatin:focus { border-color: #6c8fb5; }
+
+#send {
+  border: none;
+  border-radius: 8px;
+  background: #6c8fb5;
+  color: #fff;
+  width: 38px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#send:hover { background: #58799c; }
+
+/* ---------- 右键菜单 ---------- */
+#ctxmenu {
+  position: absolute;
+  min-width: 132px;
+  background: rgba(250, 250, 252, 0.97);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  padding: 5px;
+  z-index: 20;
+  font-size: 14px;
+  color: #333;
+}
+
+#ctxmenu.hidden { display: none; }
+
+#ctxmenu .mi {
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#ctxmenu .mi:hover { background: #6c8fb5; color: #fff; }
+
+#ctxmenu .sep {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 4px 6px;
+}

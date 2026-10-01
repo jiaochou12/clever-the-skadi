@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>桌宠设置</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      font-size: 13px;
+      color: #2b2f36;
+      background: #f4f6fa;
+      padding: 14px 16px 70px;
+    }
+    h1 { font-size: 16px; margin: 2px 0 12px; color: #33475b; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 14px; margin: 0 0 10px; color: #4a5a6a; border-left: 3px solid #6c8fb5; padding-left: 8px; }
+    .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .row label { width: 92px; flex-shrink: 0; color: #556; }
+    .row input[type=text], .row input[type=password], .row select, .row textarea {
+      flex: 1;
+      border: 1px solid #ccd3db;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+    .row textarea { height: 64px; resize: vertical; }
+    .row input[type=range] { flex: 1; }
+    .row input[type=color] { width: 46px; height: 28px; border: none; background: none; padding: 0; }
+    .row .val { width: 52px; text-align: right; color: #6c8fb5; font-variant-numeric: tabular-nums; }
+    .hint { color: #98a2ad; font-size: 12px; margin: 2px 0 0 100px; }
+    button {
+      border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer;
+      background: #6c8fb5; color: #fff; font-size: 13px; font-family: inherit;
+    }
+    button:hover { background: #58799c; }
+    button.ghost { background: #e8ecf1; color: #445; }
+    button.ghost:hover { background: #d8dee6; }
+    #footer {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: #fff; border-top: 1px solid #e2e6ec;
+      padding: 10px 16px; display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+    #footer .spacer { flex: 1; }
+    #toast {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      background: #3d9a6c; color: #fff; padding: 8px 18px; border-radius: 8px;
+      font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99;
+    }
+    #toast.show { opacity: 1; }
+    #testResult { margin: 6px 0 0 100px; font-size: 12px; color: #667; white-space: pre-wrap; }
+    input[type=password] { letter-spacing: 1px; }
+    .eye { width: 30px; flex-shrink: 0; background: none; border: none; color: #789; font-size: 15px; padding: 4px; }
+  </style>
+</head>
+<body>
+  <h1>⚙ 桌宠设置</h1>
+
+  <div class="card">
+    <h2>API 设置（OpenAI 兼容接口）</h2>
+    <div class="row">
+      <label>接口地址</label>
+      <input type="text" id="baseUrl" placeholder="例：https://api.openai.com/v1" />
+    </div>
+    <div class="hint">常用的还有 https://api.deepseek.com/v1 等，填到 /v1 即可</div>
+    <div class="row">
+      <label>API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-…" />
+      <button class="eye" id="eye" title="显示/隐藏">👁</button>
+    </div>
+    <div class="row">
+      <label>模型名称</label>
+      <input type="text" id="model" placeholder="例：gpt-4o-mini / deepseek-chat" />
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <label>人设提示词</label>
+      <textarea id="systemPrompt"></textarea>
+    </div>
+    <div class="row">
+      <label>温度</label>
+      <input type="range" id="temperature" min="0" max="2" step="0.1" />
+      <span class="val" id="temperatureVal"></span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label></label>
+      <button id="testBtn">测试连接</button>
+      <span id="testResult"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>模型动作</h2>
+    <div class="row">
+      <label>当前动作</label>
+      <select id="mode">
+        <option value="idle">🧍 站立（待机）</option>
+        <option value="walk">🚶 走路</option>
+        <option value="lie">🛌 卧倒</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>站立动画</label>
+      <select id="animIdle"></select>
+    </div>
+    <div class="row">
+      <label>走路动画</label>
+      <select id="animWalk"></select>
+    </div>
+    <div class="row">
+      <label>卧倒动画</label>
+      <select id="animLie"></select>
+    </div>
+    <div class="row">
+      <label>走路速度</label>
+      <input type="range" id="speed" min="20" max="300" step="5" />
+      <span class="val" id="speedVal"></span>
+    </div>
+    <div class="row">
+      <label>模型缩放</label>
+      <input type="range" id="scale" min="0.5" max="1.6" step="0.05" />
+      <span class="val" id="scaleVal"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>对话框</h2>
+    <div class="row">
+      <label>背景颜色</label>
+      <input type="color" id="bg" />
+      <label style="width:70px">文字颜色</label>
+      <input type="color" id="color" />
+    </div>
+    <div class="row">
+      <label>背景透明度</label>
+      <input type="range" id="opacity" min="10" max="100" step="1" />
+      <span class="val" id="opacityVal"></span>
+    </div>
+    <div class="row">
+      <label>字体大小</label>
+      <input type="range" id="fontSize" min="12" max="24" step="1" />
+      <span class="val" id="fontSizeVal"></span>
+    </div>
+    <div class="row">
+      <label>自动隐藏</label>
+      <input type="range" id="autoHideSec" min="0" max="120" step="5" />
+      <span class="val" id="autoHideSecVal"></span>
+    </div>
+    <div class="hint">自动隐藏 0 秒表示回复后气泡保持显示</div>
+  </div>
+
+  <div id="footer">
+    <button class="ghost" id="clearBtn">清空对话记录</button>
+    <button class="ghost" id="resetBtn">恢复默认设置</button>
+    <div class="spacer"></div>
+    <button id="closeBtn">关闭</button>
+    <button id="saveBtn">保存并应用</button>
+  </div>
+
+  <div id="toast"></div>
+  <script src="/static/settings.js"></script>
+</body>
+</html>
