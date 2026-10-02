@@ -88,8 +88,9 @@ function openSettings() {
     width: 580,
     height: 800,
     title: '桌宠设置',
+    icon: path.join(app.getAppPath(), 'build', 'icon.ico'),
     autoHideMenuBar: true,
-    backgroundColor: '#15171e',
+    backgroundColor: '#f4f6fa',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
