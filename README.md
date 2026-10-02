@@ -4,6 +4,16 @@
 
 模型来源：[isHarryh/Ark-Models · 1012_skadi2_iteration#2](https://github.com/isHarryh/Ark-Models/tree/main/models/1012_skadi2_iteration%232)
 
+## 截图
+
+| 对话 | 思考流 |
+| --- | --- |
+| ![桌宠对话](docs/screen-chat.png) | ![思考流](docs/screen-thinking.png) |
+
+| 桌宠本体 | 设置窗口 |
+| --- | --- |
+| ![桌宠本体](docs/screen-pet.png) | ![设置窗口](docs/screen-settings.png) |
+
 ## 功能
 
 - **桌宠显示**：透明无边框窗口、始终置顶、空白区域鼠标穿透、可拖动；拖动无边界约束，可放置任意位置（包括屏幕外）；走路时按**模型自身可见像素**对照所在屏幕分辨率判断边界，到达边缘自动折返；走丢可在设置窗口点「找回桌宠」召回
