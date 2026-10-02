@@ -175,9 +175,9 @@ function applyScale() {
   positionBubble();
 }
 
-// 气泡底边严格位于模型实际顶部上方 1/6 模型高度处
+// 气泡底边位于模型实际顶部上方 gapPercent（默认 1/6≈17%）模型高度处，可在设置中调节
 function positionBubble() {
-  const gap = modelRect.h / 6;
+  const gap = modelRect.h * (Number(cfg.bubble.gapPercent ?? 17) / 100);
   const bottomEdge = modelRect.y - gap;
   bubbleEl.style.bottom = (H - bottomEdge) + 'px';
   bubbleEl.style.top = 'auto';

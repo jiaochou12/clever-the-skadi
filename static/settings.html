@@ -235,7 +235,12 @@
       <input type="range" id="bubbleHeight" min="100" max="400" step="10" />
       <span class="val" id="bubbleHeightVal"></span>
     </div>
-    <div class="hint">宽度与高度共同决定对话框的大小和比例；高度指消息记录区的最大高度，超过后滚动显示</div>
+    <div class="row">
+      <label>距模型距离</label>
+      <input type="range" id="gapPercent" min="0" max="60" step="1" />
+      <span class="val" id="gapPercentVal"></span>
+    </div>
+    <div class="hint">宽度与高度共同决定对话框的大小和比例；高度指消息记录区的最大高度，超过后滚动显示；距模型距离是气泡底边到模型顶部的空隙（模型高度的百分比，0 为紧贴）</div>
     <div class="row">
       <label>背景颜色</label>
       <input type="color" id="bg" />

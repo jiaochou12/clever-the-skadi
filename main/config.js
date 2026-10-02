@@ -29,6 +29,7 @@ function defaults() {
       fontSize: 15,
       width: 440,         // 气泡宽度 px（260 ~ 460）
       height: 160,        // 消息区最大高度 px（100 ~ 400）
+      gapPercent: 17,     // 气泡底边距模型顶部的距离（模型高度的百分比，0 ~ 60；17 ≈ 1/6）
       autoHideSec: 30     // 0 = 不自动隐藏
     }
   };
@@ -58,6 +59,7 @@ function sanitize() {
   const b = cfg.bubble;
   b.width = Math.min(460, Math.max(260, Number(b.width) || 440));
   b.height = Math.min(400, Math.max(100, Number(b.height) || 160));
+  b.gapPercent = Math.min(60, Math.max(0, Number(b.gapPercent ?? 17)));
 }
 
 function load() {
