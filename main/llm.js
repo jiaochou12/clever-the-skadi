@@ -1,6 +1,9 @@
 // OpenAI 兼容接口的流式对话代理：在主进程发起请求，规避渲染进程 CORS 限制
-const active = new Map(); // id -> AbortController
+const active = new Map(); // id -> { ac, timedOut }
 let nextId = 1;
+
+const CHAT_IDLE_TIMEOUT = Number(process.env.SKADIPET_CHAT_TIMEOUT_MS) || 90000;  // 聊天：连续 90 秒收不到任何数据则断开
+const TEST_TIMEOUT = Number(process.env.SKADIPET_TEST_TIMEOUT_MS) || 60000;       // 测试连接：60 秒无响应视为失败
 
 function buildBody(cfg, messages, stream, extra = {}) {
   const { model, temperature } = cfg.api;
@@ -31,7 +34,18 @@ async function chat({ cfg, messages, win, id }) {
     return;
   }
   const ac = new AbortController();
-  active.set(id, ac);
+  const state = { ac, timedOut: false };
+  active.set(id, state);
+  // 空闲保护：等响应头、流中每个分块都会重置计时；超时主动断开并给出可读提示
+  let guard = null;
+  const armGuard = () => {
+    clearTimeout(guard);
+    guard = setTimeout(() => {
+      state.timedOut = true;
+      try { ac.abort(); } catch (e) {}
+    }, CHAT_IDLE_TIMEOUT);
+  };
+  armGuard();
   const full = [{ role: 'system', content: cfg.api.systemPrompt || '' }, ...messages].filter(m => m.content);
   try {
     const res = await fetch(endpoint(cfg), {
@@ -40,6 +54,7 @@ async function chat({ cfg, messages, win, id }) {
       headers: headers(cfg),
       body: JSON.stringify(buildBody(cfg, full, true))
     });
+    armGuard();
     if (!res.ok) {
       const t = (await res.text().catch(() => '')).slice(0, 300);
       throw new Error(`HTTP ${res.status} ${t}`);
@@ -51,6 +66,7 @@ async function chat({ cfg, messages, win, id }) {
       let buf = '';
       for (;;) {
         const { done, value } = await reader.read();
+        armGuard();
         if (done) break;
         buf += dec.decode(value, { stream: true });
         let idx;
@@ -75,11 +91,19 @@ async function chat({ cfg, messages, win, id }) {
     win.webContents.send('llm:done', { id });
   } catch (e) {
     if (e && e.name === 'AbortError') {
-      win.webContents.send('llm:done', { id, aborted: true });
+      if (state.timedOut) {
+        win.webContents.send('llm:error', {
+          id,
+          message: `响应超时（${Math.round(CHAT_IDLE_TIMEOUT / 1000)} 秒没有收到任何数据），API 服务可能不可用或太慢`
+        });
+      } else {
+        win.webContents.send('llm:done', { id, aborted: true });
+      }
     } else {
       win.webContents.send('llm:error', { id, message: String((e && e.message) || e) });
     }
   } finally {
+    clearTimeout(guard);
     active.delete(id);
   }
 }
@@ -88,7 +112,7 @@ async function test(cfg) {
   const err = checkConfig(cfg);
   if (err) return { ok: false, message: err };
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), 30000);
+  const timer = setTimeout(() => ac.abort(), TEST_TIMEOUT);
   try {
     const t0 = Date.now();
     const res = await fetch(endpoint(cfg), {
@@ -108,6 +132,9 @@ async function test(cfg) {
     const text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
     return { ok: true, message: `连接成功（${Date.now() - t0}ms）：${String(text).trim().slice(0, 50)}` };
   } catch (e) {
+    if (e && e.name === 'AbortError') {
+      return { ok: false, message: `连接超时（${Math.round(TEST_TIMEOUT / 1000)} 秒无响应），API 服务不可用或太慢` };
+    }
     return { ok: false, message: String((e && e.message) || e) };
   } finally {
     clearTimeout(timer);
@@ -115,7 +142,7 @@ async function test(cfg) {
 }
 
 function abortAll() {
-  for (const ac of active.values()) {
+  for (const { ac } of active.values()) {
     try { ac.abort(); } catch (e) {}
   }
   active.clear();
