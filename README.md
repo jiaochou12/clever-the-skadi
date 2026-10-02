@@ -1,6 +1,8 @@
-# SkadiPet · clever-the-skadi
-
-基于 **Spine 3.8** 模型（浊心斯卡蒂）的 Windows 桌宠，填入任意 **OpenAI 兼容 API** 即可对话。
+<div align="center">
+  <img src="build/icon.png" width="128" alt="SkadiPet" />
+  <h1>SkadiPet</h1>
+  <p>基于 <strong>Spine 3.8</strong> 模型（浊心斯卡蒂）的 Windows 桌宠，填入任意 <strong>OpenAI 兼容 API</strong> 即可对话</p>
+</div>
 
 模型来源：[isHarryh/Ark-Models · 1012_skadi2_iteration#2](https://github.com/isHarryh/Ark-Models/tree/main/models/1012_skadi2_iteration%232)
 
@@ -59,6 +61,7 @@ main/          Electron 主进程（窗口 / 位置钳制 / LLM 流式代理 / �
 src/           渲染层源码（pixi-spine 加载渲染、气泡定位、动作与随机调度、交互）
 static/        页面与样式（index.html / settings.html / css）
 assets/models  Spine 模型（.skel / .atlas / .png）
+build/         应用图标（icon.ico / icon.png）
 test/          开发调试工具（CDP 截图、mock LLM 服务器）
 ```
 
