@@ -101,6 +101,7 @@ async function load() {
   showVal('fontSize', cfg.bubble.fontSize + 'px');
   fillValue('autoHideSec', cfg.bubble.autoHideSec);
   showVal('autoHideSec', cfg.bubble.autoHideSec === 0 ? '不隐藏' : cfg.bubble.autoHideSec + 's');
+  paintAllRanges();
 }
 
 function collect() {
@@ -132,8 +133,23 @@ function collect() {
   };
 }
 
-// 滑块数值实时显示
-for (const id of ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec', 'randomMinSec', 'randomMaxSec']) {
+// 滑块：轨道按当前值填充，数值实时显示
+const RANGE_IDS = ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec', 'randomMinSec', 'randomMaxSec'];
+
+function paintRange(id) {
+  const el = fields[id];
+  const min = Number(el.min) || 0;
+  const max = Number(el.max) || 100;
+  const pct = ((Number(el.value) - min) / (max - min)) * 100;
+  el.style.background =
+    `linear-gradient(to right, #6c8fb5 0% ${pct}%, #e6e9ee ${pct}% 100%)`;
+}
+
+function paintAllRanges() {
+  for (const id of RANGE_IDS) paintRange(id);
+}
+
+for (const id of RANGE_IDS) {
   fields[id].addEventListener('input', () => {
     const v = Number(fields[id].value);
     if (id === 'speed') showVal(id, v + ' px/s');
@@ -143,6 +159,7 @@ for (const id of ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoH
     else if (id === 'autoHideSec') showVal(id, v === 0 ? '不隐藏' : v + 's');
     else if (id === 'randomMinSec' || id === 'randomMaxSec') showVal(id, v + 's');
     else showVal(id, v);
+    paintRange(id);
   });
 }
 
@@ -160,7 +177,7 @@ $('playOnceBtn').addEventListener('click', () => {
 $('testBtn').addEventListener('click', async () => {
   const el = $('testResult');
   el.textContent = '测试中…';
-  el.style.color = '#9aa3b2';
+  el.style.color = '#8a919c';
   // 先保存当前 API 设置再测试，保证测试的是表单里的值
   await window.pet.saveConfig(collect());
   const r = await window.pet.chatTest();

@@ -12,23 +12,8 @@
   <div id="bubble" class="hidden">
     <div id="chatlog"></div>
     <div id="inputrow">
-      <form class="form" onsubmit="return false">
-        <span class="flex">
-          <label class="from">
-            <input id="chatin" type="text" placeholder="想问点什么…（Enter 发送）" autocomplete="off" class="input" />
-            <button id="bubbleClose" class="close-btn" type="button" title="收起">
-              <svg fill="currentColor" viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5.3 6.7 5.3 6.7c-.4.4-.4 1 0 1.4L10.2 13l-4.9 4.9c-.4.4-.4 1 0 1.4 .4.4 1 .4 1.4 0L11.6 14.4 16.5 19.3c.4.4 1 .4 1.4 0 .4-.4.4-1 0-1.4L13 13l4.9-4.9c.4-.4.4-1 0-1.4 -.4-.4-1-.4-1.4 0L11.6 11.6 6.7 6.7c-.4-.4-1-.4-1.4 0Z" />
-              </svg>
-            </button>
-          </label>
-        </span>
-        <button id="send" class="arrow" type="button" title="发送">
-          <svg fill="currentColor" viewBox="0 0 24 24" height="18" width="18" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 11h12.17l-4.88-4.88L12.7 4.71 20 12l-7.29 7.29-1.41-1.41L16.17 13H4v-2z" />
-          </svg>
-        </button>
-      </form>
+      <input id="chatin" type="text" placeholder="想问点什么…（Enter 发送）" autocomplete="off" />
+      <button id="send" title="发送">发送</button>
     </div>
   </div>
 

@@ -1,4 +1,22 @@
+/* ============================================================
+   SkadiPet 桌宠窗口样式
+   设计原则来自 emilkowalski/skills（emil-design-eng + apple-design）：
+   - 自定义 ease-out 曲线，时长 ≤ 240ms，退出比进入更快
+   - 只动 transform / opacity；不从 scale(0) 开始
+   - 弹出层原点感知（从触发处展开）；按压反馈 scale(0.97)
+   - 系统字体；正文行高放松、小字号轻微正字距
+   - 尊重 prefers-reduced-motion
+   ============================================================ */
+
 * { box-sizing: border-box; }
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease: ease;
+  --accent: #6c8fb5;        /* 与桌宠气质一致的灰蓝，仅用于焦点等低噪声处 */
+  --ink: #26292e;           /* 近黑而非纯黑 */
+  --ink-soft: #5c6470;
+}
 
 html, body {
   margin: 0;
@@ -8,7 +26,7 @@ html, body {
   background: transparent;
   overflow: hidden;
   user-select: none;
-  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
 }
 
 #stage, #stage canvas {
@@ -32,17 +50,30 @@ html, body {
   background: var(--bg);
   color: var(--fg);
   opacity: var(--op);
-  border-radius: 14px;
-  padding: 10px 12px 8px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 12px 14px 10px;
+  /* 分层阴影：一层贴地、一层环境 */
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.13),
+    0 2px 8px rgba(0, 0, 0, 0.07);
   font-size: var(--fs);
-  transition: opacity 0.25s ease;
+  /* 从模型方向（底边）长出来；同路径进出 —— 空间一致性 */
+  transform-origin: 50% 100%;
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
   z-index: 10;
 }
 
+/* 退出比进入快；从 scale(0.97) 开始，而非 0 */
 #bubble.hidden {
   opacity: 0;
+  transform: translateX(-50%) translateY(6px) scale(0.97);
   pointer-events: none;
+  transition:
+    opacity 140ms var(--ease-out),
+    transform 140ms var(--ease-out);
 }
 
 #chatlog {
@@ -54,166 +85,151 @@ html, body {
 }
 
 #chatlog .msg {
-  margin: 2px 0;
-  line-height: 1.45;
+  margin: 3px 0;
+  line-height: 1.55;
+  letter-spacing: 0.01em;      /* 小字号轻微正字距 */
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+
+/* 新消息：轻微上浮淡入（插入即播，无需 JS） */
+@starting-style {
+  #chatlog .msg {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 #chatlog .msg.user {
   color: #7a6a4f;
-  font-size: calc(var(--fs) - 3px);
-  opacity: 0.85;
+  font-size: calc(var(--fs) - 2px);
+  opacity: 0.75;
 }
 
 #chatlog .msg.assistant {
   font-size: var(--fs);
 }
 
-#chatlog .msg.assistant.thinking .dots-container {
-  display: flex;
-  align-items: center;
-  height: 18px;
-  padding: 2px 0;
-}
-
-#chatlog .msg.assistant.thinking .dot {
-  width: 8px;
-  height: 8px;
-  margin-right: 8px;
-  background-color: #ff0092;
+/* 思考中：单点轻呼吸（只动 opacity，克制、可被 reduced-motion 关闭） */
+#chatlog .msg.assistant.thinking::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 5px;
   border-radius: 50%;
-  animation: uiv-jump 800ms infinite;
+  background: currentColor;
+  vertical-align: 2px;
+  animation: thinking-pulse 1.1s ease-in-out infinite;
 }
 
-#chatlog .msg.assistant.thinking .dot:nth-child(2) { animation-delay: 50ms; }
-
-#chatlog .msg.assistant.thinking .dot:nth-child(3) { animation-delay: 100ms; }
-
-@keyframes uiv-jump {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
 }
 
 #chatlog::-webkit-scrollbar { width: 4px; }
-#chatlog::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+#chatlog::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 2px; }
 
-/* ---------- 输入区：uiverse.io/reglobby/rotten-bullfrog-69 ---------- */
+/* ---------- 输入区 ---------- */
 #inputrow {
-  margin-top: 8px;
-}
-
-#inputrow .form {
   display: flex;
-  border: 1px solid #383838;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.25em;
-  padding: 5px;
-  background-color: #212121;
-  border-radius: 12px;
-}
-
-#inputrow .form:focus-within {
-  border: 1px solid #4f4f4f;
-}
-
-#inputrow .flex {
-  display: flex;
-  flex: 1 1 0%;
-  min-width: 0;
-  margin-left: 0.25em;
-}
-
-#inputrow .from {
-  display: flex;
-  position: relative;
-  border-radius: 8px;
-  background-color: #212121;
-  flex: 1 1 0%;
-  min-width: 0;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 #chatin {
-  padding: 8px;
-  padding-inline-end: 24px;
-  width: 100%;
-  flex: 1 1 0%;
-  color: #e5e5e5;
+  flex: 1;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 6px 10px;
   font-size: calc(var(--fs) - 1px);
+  font-family: inherit;
   outline: none;
-  background-color: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.035);
+  color: var(--fg);
+  transition:
+    border-color 150ms var(--ease),
+    background-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
 }
 
-#chatin::placeholder { color: #737373; }
+#chatin::placeholder { color: rgba(0, 0, 0, 0.35); }
 
-#inputrow .close-btn {
-  display: flex;
-  border-radius: 50%;
-  margin-right: 0.25rem;
-  position: relative;
-  right: 0px;
-  aspect-ratio: 1;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  border: none;
-  cursor: pointer;
-  background-color: #212121;
-  color: #737373;
-}
-
-#inputrow .close-btn:hover {
-  background-color: #383838;
-  color: #e5e5e5;
-}
-
-#inputrow .right {
-  display: flex;
-  margin-right: 0.5rem;
-  gap: 0.25rem;
+#chatin:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(108, 143, 181, 0.16);
 }
 
 #send {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1;
-  padding: 0.5rem;
-  border-radius: 50%;
-  border: 1px solid #343434;
-  background-color: #1a1a1a;
+  border: none;
+  border-radius: 10px;
+  background: #2b2f36;
+  color: #fff;
+  padding: 0 14px;
   cursor: pointer;
-  color: #f2f2f2;
+  font-size: 13px;
+  font-family: inherit;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms var(--ease);
 }
 
-#send:hover { background-color: #262626; }
+#send:hover { background: #1f2328; }
+#send:active { transform: scale(0.97); }   /* 按压即时反馈 */
 
-/* ---------- 右键菜单 ---------- */
+/* ---------- 右键菜单（弹出层：原点感知） ---------- */
 #ctxmenu {
   position: absolute;
   min-width: 132px;
-  background: rgba(250, 250, 252, 0.97);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-  padding: 5px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.16),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 4px;
   z-index: 20;
-  font-size: 14px;
-  color: #333;
+  font-size: 13px;
+  color: var(--ink);
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
 }
 
-#ctxmenu.hidden { display: none; }
+#ctxmenu.hidden {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+  transition:
+    opacity 100ms var(--ease-out),
+    transform 100ms var(--ease-out);
+}
 
 #ctxmenu .mi {
   padding: 7px 12px;
   border-radius: 6px;
   cursor: pointer;
+  transition: background-color 120ms var(--ease);
 }
 
-#ctxmenu .mi:hover { background: #6c8fb5; color: #fff; }
+#ctxmenu .mi:hover { background: #f2f3f5; }
 
 #ctxmenu .sep {
   height: 1px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   margin: 4px 6px;
+}
+
+/* ---------- 无障碍：减少动态 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #bubble, #ctxmenu, #chatlog .msg {
+    transition: opacity 150ms var(--ease);
+  }
+  #ctxmenu.hidden, #chatlog .msg { transform: none; }
+  #bubble.hidden { transform: translateX(-50%); }
+  #chatlog .msg.assistant.thinking::after { animation: none; }
+  @starting-style {
+    #chatlog .msg { opacity: 1; }
+  }
 }

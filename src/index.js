@@ -274,7 +274,7 @@ function subscribe() {
     if (!p) return;
     if (p.el.classList.contains('thinking')) {
       p.el.classList.remove('thinking');
-      p.el.innerHTML = '';
+      p.el.textContent = '';
     }
     p.el.textContent += delta;
     scrollLog();
@@ -283,10 +283,7 @@ function subscribe() {
     const p = pendingReplies.get(id);
     pendingReplies.delete(id);
     if (p) {
-      if (aborted && !p.el.textContent) {
-        p.el.innerHTML = '';
-        p.el.textContent = '（已取消）';
-      }
+      if (aborted && !p.el.textContent) p.el.textContent = '（已取消）';
       if (p.el.textContent) history.push({ role: 'assistant', content: p.el.textContent });
       if (history.length > 40) history = history.slice(-40);
     }
@@ -299,7 +296,6 @@ function subscribe() {
     chatBusy = false;
     if (p) {
       p.el.classList.remove('thinking');
-      p.el.innerHTML = '';
       p.el.textContent = '出错了：' + message;
     }
     endChat();
@@ -381,10 +377,8 @@ async function onSend() {
   addMsg('user', text);
   history.push({ role: 'user', content: text });
   window.pet.setState({ chatActive: true });
-  const aEl = addMsg('assistant', '');
+  const aEl = addMsg('assistant', '思考中');
   aEl.classList.add('thinking');
-  aEl.innerHTML =
-    '<div class="dots-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   try {
     const id = await window.pet.chat(history.slice(-20));
     pendingReplies.set(id, { el: aEl });
@@ -449,7 +443,6 @@ function bindUI() {
   });
 
   sendEl.addEventListener('click', onSend);
-  $('bubbleClose').addEventListener('click', closeBubble);
   chatinEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') onSend();
   });
@@ -495,8 +488,14 @@ function showMenu(x, y) {
   ctxMenuEl.classList.remove('hidden');
   const mw = ctxMenuEl.offsetWidth;
   const mh = ctxMenuEl.offsetHeight;
-  ctxMenuEl.style.left = Math.min(x, W - mw - 4) + 'px';
-  ctxMenuEl.style.top = Math.min(y, H - mh - 4) + 'px';
+  const left = Math.min(x, W - mw - 4);
+  const top = Math.min(y, H - mh - 4);
+  ctxMenuEl.style.left = left + 'px';
+  ctxMenuEl.style.top = top + 'px';
+  // 原点感知：菜单从点击处展开（贴近边缘时从对应角）
+  ctxMenuEl.style.transformOrigin =
+    (x > left + mw / 2 ? 'right' : 'left') + ' ' +
+    (y > top + mh / 2 ? 'bottom' : 'top');
 }
 
 function hideMenu() {

@@ -58,10 +58,13 @@ test/          开发调试工具（CDP 截图、mock LLM 服务器）
 ### v1.2.0（2026-10-02，feature 分支，待验收）
 
 - **彻底去除边界检验**：删除主进程全部屏幕钳制（拖动、走路折返、初始位置），桌宠可放置于任意位置、走路不再折返；新增设置窗口「找回桌宠」按钮一键召回（移回主屏幕右下角）
-- **UI 重设计**（样式取自 uiverse.io，MIT）：
-  - 对话输入区套用 [reglobby/rotten-bullfrog-69](https://uiverse.io/reglobby/rotten-bullfrog-69)：深色圆角输入舱 + 圆形箭头发送键，新增「收起」按钮
-  - 思考中指示器套用 [adamgiebl/thin-lionfish-5](https://uiverse.io/adamgiebl/thin-lionfish-5)：三点脉冲加载动画
-  - 设置窗口套用 [byllzz/fluffy-hound-44](https://uiverse.io/byllzz/fluffy-hound-44)：深色玻璃拟态卡片、三色圆点标题、渐变滑块与渐变按钮
+- **UI 重设计**：依据 [emilkowalski/skills](https://github.com/emilkowalski/skills) 的设计工程原则（emil-design-eng + apple-design）全面重做视觉与动效：
+  - 动效体系：自定义 ease-out 曲线（`cubic-bezier(0.23,1,0.32,1)`）、时长 100–240ms、退出比进入快；气泡/右键菜单从 `scale(0.97)` 淡入长出（永不从 scale(0) 开始），且从触发方向原点展开
+  - 按压反馈：所有按钮 `:active` 时 `scale(0.97)`；输入框焦点环 + 边框过渡
+  - 新消息轻微上浮淡入（CSS `@starting-style`）；"思考中"改为单点呼吸动画（只动 opacity）
+  - 视觉：系统字体栈、正文行高 1.55、小字号轻微正字距；分层阴影 + 发丝线边框；近黑主按钮 + 灰蓝强调色（焦点/滑块填充）
+  - 设置窗口：白底卡片式布局、滑块轨道按值填充、底栏毛玻璃、卡片 40ms 阶梯入场
+  - 全部动效尊重 `prefers-reduced-motion`
 
 ### v1.1.0（2026-10-02，tag 未发）
 
