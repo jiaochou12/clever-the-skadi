@@ -160,7 +160,7 @@ $('playOnceBtn').addEventListener('click', () => {
 $('testBtn').addEventListener('click', async () => {
   const el = $('testResult');
   el.textContent = '测试中…';
-  el.style.color = '#667';
+  el.style.color = '#9aa3b2';
   // 先保存当前 API 设置再测试，保证测试的是表单里的值
   await window.pet.saveConfig(collect());
   const r = await window.pet.chatTest();
@@ -176,6 +176,11 @@ async function save() {
 $('saveBtn').addEventListener('click', save);
 
 $('closeBtn').addEventListener('click', () => window.pet.closeSettings());
+
+$('recallBtn').addEventListener('click', () => {
+  window.pet.recallPet();
+  toast('已把桌宠移回主屏幕右下角');
+});
 
 $('clearBtn').addEventListener('click', () => {
   window.pet.clearChat();

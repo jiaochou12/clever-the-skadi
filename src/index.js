@@ -274,7 +274,7 @@ function subscribe() {
     if (!p) return;
     if (p.el.classList.contains('thinking')) {
       p.el.classList.remove('thinking');
-      p.el.textContent = '';
+      p.el.innerHTML = '';
     }
     p.el.textContent += delta;
     scrollLog();
@@ -283,7 +283,10 @@ function subscribe() {
     const p = pendingReplies.get(id);
     pendingReplies.delete(id);
     if (p) {
-      if (aborted && !p.el.textContent) p.el.textContent = '（已取消）';
+      if (aborted && !p.el.textContent) {
+        p.el.innerHTML = '';
+        p.el.textContent = '（已取消）';
+      }
       if (p.el.textContent) history.push({ role: 'assistant', content: p.el.textContent });
       if (history.length > 40) history = history.slice(-40);
     }
@@ -296,6 +299,7 @@ function subscribe() {
     chatBusy = false;
     if (p) {
       p.el.classList.remove('thinking');
+      p.el.innerHTML = '';
       p.el.textContent = '出错了：' + message;
     }
     endChat();
@@ -377,8 +381,10 @@ async function onSend() {
   addMsg('user', text);
   history.push({ role: 'user', content: text });
   window.pet.setState({ chatActive: true });
-  const aEl = addMsg('assistant', '思考中');
+  const aEl = addMsg('assistant', '');
   aEl.classList.add('thinking');
+  aEl.innerHTML =
+    '<div class="dots-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   try {
     const id = await window.pet.chat(history.slice(-20));
     pendingReplies.set(id, { el: aEl });
@@ -443,6 +449,7 @@ function bindUI() {
   });
 
   sendEl.addEventListener('click', onSend);
+  $('bubbleClose').addEventListener('click', closeBubble);
   chatinEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') onSend();
   });

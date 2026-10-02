@@ -14,13 +14,7 @@ const WALK_TICK = 33;
 const PET_W = 480;
 const PET_H = 700;
 
-// 把桌宠窗口限制在整个屏幕内（可自由覆盖任务栏区域，但不会被拖出屏幕丢失）
-function clampPetPos(x, y) {
-  const b = screen.getPrimaryDisplay().bounds;
-  const cx = Math.min(Math.max(b.x, x), b.x + b.width - PET_W);
-  const cy = Math.min(Math.max(b.y, y), b.y + b.height - PET_H);
-  return [Math.round(cx), Math.round(cy)];
-}
+// 不做任何屏幕边界约束：桌宠可放置于屏幕外任意位置（走丢时可通过设置窗口“找回桌宠”召回）
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -37,7 +31,8 @@ if (!gotLock) {
 
 function createPetWindow() {
   const wa = screen.getPrimaryDisplay().workArea;
-  const [ix, iy] = clampPetPos(wa.x + wa.width - PET_W - 20, wa.y + wa.height - PET_H);
+  const ix = Math.round(wa.x + wa.width - PET_W - 20);
+  const iy = Math.round(wa.y + wa.height - PET_H);
   petWin = new BrowserWindow({
     width: PET_W,
     height: PET_H,
@@ -94,7 +89,7 @@ function openSettings() {
     height: 800,
     title: '桌宠设置',
     autoHideMenuBar: true,
-    backgroundColor: '#f4f6fa',
+    backgroundColor: '#15171e',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -120,11 +115,8 @@ function startWalkLoop() {
     const cfg = config.get();
     const [x, y] = petWin.getPosition();
     const step = Math.max(1, Math.round((Number(cfg.model.speed) || 90) * WALK_TICK / 1000));
-    let nx = x + walkDir * step;
-    const b = screen.getPrimaryDisplay().bounds;
-    if (nx <= b.x) { nx = b.x; flipWalk(1); }
-    else if (nx + PET_W >= b.x + b.width) { nx = b.x + b.width - PET_W; flipWalk(-1); }
-    petWin.setPosition(...clampPetPos(nx, y));
+    // 无边界：一路走到动画停止为止，不再折返
+    petWin.setPosition(x + walkDir * step, y);
   }, WALK_TICK);
 }
 
@@ -171,9 +163,18 @@ function registerIpc() {
   ipcMain.on('win:dragMove', (e, dx, dy) => {
     if (!petWin || petWin.isDestroyed()) return;
     const [x, y] = petWin.getPosition();
-    petWin.setPosition(...clampPetPos(x + Math.round(dx), y + Math.round(dy)));
+    petWin.setPosition(x + Math.round(dx), y + Math.round(dy));
   });
   ipcMain.on('win:dragEnd', () => { petState.dragging = false; });
+
+  // 找回桌宠：移回主屏幕工作区右下角
+  ipcMain.on('win:recall', () => {
+    if (!petWin || petWin.isDestroyed()) return;
+    const wa = screen.getPrimaryDisplay().workArea;
+    petWin.setPosition(Math.round(wa.x + wa.width - PET_W - 20), Math.round(wa.y + wa.height - PET_H));
+    petWin.show();
+    petWin.focus();
+  });
 
   ipcMain.handle('llm:chat', (e, messages) => {
     const id = llm.nextId();

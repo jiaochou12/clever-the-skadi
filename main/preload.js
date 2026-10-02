@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('pet', {
   dragStart: () => ipcRenderer.send('win:dragStart'),
   dragMove: (dx, dy) => ipcRenderer.send('win:dragMove', dx, dy),
   dragEnd: () => ipcRenderer.send('win:dragEnd'),
+  recallPet: () => ipcRenderer.send('win:recall'),
   // 菜单 / 设置窗口 / 退出
   openSettings: () => ipcRenderer.send('settings:open'),
   closeSettings: () => ipcRenderer.send('settings:close'),

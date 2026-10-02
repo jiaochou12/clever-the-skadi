@@ -4,70 +4,179 @@
   <meta charset="utf-8" />
   <title>桌宠设置</title>
   <style>
+    /* ---------- 基础：uiverse.io/byllzz/fluffy-hound-44 玻璃拟态 ---------- */
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
       font-size: 13px;
-      color: #2b2f36;
-      background: #f4f6fa;
-      padding: 14px 16px 70px;
+      color: #e6e9f2;
+      /* 深色底 + 彩色光斑，给玻璃卡片提供可折射的背景 */
+      background:
+        radial-gradient(circle at 15% 12%, rgba(124, 77, 255, 0.32), transparent 45%),
+        radial-gradient(circle at 85% 20%, rgba(79, 140, 255, 0.30), transparent 50%),
+        radial-gradient(circle at 70% 88%, rgba(40, 200, 100, 0.18), transparent 45%),
+        #15171e;
+      padding: 16px 18px 74px;
+      user-select: none;
     }
-    h1 { font-size: 16px; margin: 2px 0 12px; color: #33475b; }
+    h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin: 2px 0 14px;
+      color: #f0f2f8;
+    }
+
     .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      box-shadow: rgba(184, 194, 215, 0.15) 0px 8px 18px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
     }
-    .card h2 { font-size: 14px; margin: 0 0 10px; color: #4a5a6a; border-left: 3px solid #6c8fb5; padding-left: 8px; }
-    .row { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
-    .row label { width: 92px; flex-shrink: 0; color: #556; }
+
+    /* 标题：三色圆点（fluffy-hound-44 .headings） */
+    .card h2 {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #f0f2f8;
+      margin: 0 0 12px;
+    }
+    .card h2 .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .card h2 .dot:nth-child(1) { background-color: #ff5f57; }
+    .card h2 .dot:nth-child(2) { background-color: #febc2e; }
+    .card h2 .dot:nth-child(3) { background-color: #28c840; }
+
+    .row { display: flex; align-items: center; gap: 10px; margin: 9px 0; }
+    .row label { width: 92px; flex-shrink: 0; color: #b6bdc9; }
     .row input[type=text], .row input[type=password], .row select, .row textarea {
       flex: 1;
-      border: 1px solid #ccd3db;
-      border-radius: 6px;
-      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 7px 9px;
       font-size: 13px;
+      color: #e8ebf4;
       outline: none;
       font-family: inherit;
+      transition: border-color 0.2s;
     }
+    .row input[type=text]:focus, .row input[type=password]:focus,
+    .row select:focus, .row textarea:focus {
+      border-color: #4f8cff;
+    }
+    .row select option { background: #1d2029; color: #e8ebf4; }
     .row textarea { height: 64px; resize: vertical; }
-    .row input[type=range] { flex: 1; }
-    .row input[type=color] { width: 46px; height: 28px; border: none; background: none; padding: 0; }
-    .row .val { width: 52px; text-align: right; color: #6c8fb5; font-variant-numeric: tabular-nums; }
-    .hint { color: #98a2ad; font-size: 12px; margin: 2px 0 0 100px; }
-    button {
-      border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer;
-      background: #6c8fb5; color: #fff; font-size: 13px; font-family: inherit;
+    .row input[type=color] {
+      width: 46px; height: 28px; border: none; background: none; padding: 0; cursor: pointer;
     }
-    button:hover { background: #58799c; }
-    button.ghost { background: #e8ecf1; color: #445; }
-    button.ghost:hover { background: #d8dee6; }
+    .row .val {
+      width: 56px;
+      text-align: right;
+      color: #9fc0ff;
+      font-variant-numeric: tabular-nums;
+    }
+    .hint { color: #8b93a3; font-size: 12px; margin: 2px 0 0 102px; }
+
+    /* 渐变滑块（fluffy-hound-44 .range / .range2） */
+    .row input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, #4f8cff, #8a2be2);
+      outline: none;
+      cursor: pointer;
+    }
+    .row input[type=range].range2 {
+      background: linear-gradient(to right, #28c840, #febc2e);
+    }
+    .row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      color: #fff;
+      background: linear-gradient(to right, #4f8cff, #8a2be2);
+      letter-spacing: 0.5px;
+      transition: filter 0.2s;
+    }
+    button:hover { filter: brightness(1.12); }
+    button.ghost {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #ccd3e0;
+    }
+    button.ghost:hover { background: rgba(255, 255, 255, 0.16); }
+    .eye {
+      width: 34px; flex-shrink: 0;
+      background: none; border: none;
+      color: #9fb0c8; font-size: 13px; padding: 4px;
+      letter-spacing: normal;
+    }
+    .eye:hover { color: #e8ebf4; filter: none; }
+
     #footer {
       position: fixed; left: 0; right: 0; bottom: 0;
-      background: #fff; border-top: 1px solid #e2e6ec;
-      padding: 10px 16px; display: flex; gap: 10px; align-items: center;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+      background: rgba(21, 23, 30, 0.78);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 11px 18px;
+      display: flex; gap: 10px; align-items: center;
     }
     #footer .spacer { flex: 1; }
+    #footer button { white-space: nowrap; }
+    #saveBtn { padding: 8px 22px; font-weight: 600; }
+
     #toast {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
-      background: #3d9a6c; color: #fff; padding: 8px 18px; border-radius: 8px;
+      background: rgba(40, 200, 100, 0.9);
+      backdrop-filter: blur(8px);
+      color: #08130c;
+      font-weight: 600;
+      padding: 8px 18px; border-radius: 10px;
       font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99;
     }
     #toast.show { opacity: 1; }
-    #testResult { margin: 6px 0 0 100px; font-size: 12px; color: #667; white-space: pre-wrap; }
+    #testResult { margin: 6px 0 0 102px; font-size: 12px; color: #9aa3b2; white-space: pre-wrap; }
     input[type=password] { letter-spacing: 1px; }
-    .eye { width: 30px; flex-shrink: 0; background: none; border: none; color: #789; font-size: 15px; padding: 4px; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
   </style>
 </head>
 <body>
   <h1>桌宠设置</h1>
 
   <div class="card">
-    <h2>API 设置（OpenAI 兼容接口）</h2>
+    <h2><span class="dot"></span><span class="dot"></span><span class="dot"></span>API 设置（OpenAI 兼容接口）</h2>
     <div class="row">
       <label>接口地址</label>
       <input type="text" id="baseUrl" placeholder="例：https://api.openai.com/v1" />
@@ -99,12 +208,12 @@
   </div>
 
   <div class="card">
-    <h2>模型动作</h2>
+    <h2><span class="dot"></span><span class="dot"></span><span class="dot"></span>模型动作</h2>
     <div class="row">
       <label>当前动作</label>
       <select id="action"></select>
     </div>
-    <div class="hint">列出模型支持的全部动画；选择"走路"时模型会在屏幕上行走，到边缘自动折返</div>
+    <div class="hint">列出模型支持的全部动画；选择"走路"时模型会朝一个方向走，没有边界，走丢可在下面点"找回桌宠"</div>
     <div class="row">
       <label>单次动作</label>
       <select id="onceAnim"></select>
@@ -113,12 +222,12 @@
     <div class="hint">播放一次选中的动画，播完自动回到当前动作</div>
     <div class="row">
       <label>随机最小间隔</label>
-      <input type="range" id="randomMinSec" min="2" max="60" step="1" />
+      <input type="range" class="range2" id="randomMinSec" min="2" max="60" step="1" />
       <span class="val" id="randomMinSecVal"></span>
     </div>
     <div class="row">
       <label>随机最大间隔</label>
-      <input type="range" id="randomMaxSec" min="2" max="120" step="1" />
+      <input type="range" class="range2" id="randomMaxSec" min="2" max="120" step="1" />
       <span class="val" id="randomMaxSecVal"></span>
     </div>
     <div class="hint">当前动作为"随机动作"时，每隔一段随机时间自动切换一个随机动画；最小间隔大于最大间隔时保存会自动交换</div>
@@ -135,7 +244,7 @@
   </div>
 
   <div class="card">
-    <h2>对话框</h2>
+    <h2><span class="dot"></span><span class="dot"></span><span class="dot"></span>对话框</h2>
     <div class="row">
       <label>背景颜色</label>
       <input type="color" id="bg" />
@@ -154,7 +263,7 @@
     </div>
     <div class="row">
       <label>自动隐藏</label>
-      <input type="range" id="autoHideSec" min="0" max="120" step="5" />
+      <input type="range" class="range2" id="autoHideSec" min="0" max="120" step="5" />
       <span class="val" id="autoHideSecVal"></span>
     </div>
     <div class="hint">自动隐藏 0 秒表示回复后气泡保持显示</div>
@@ -163,6 +272,7 @@
   <div id="footer">
     <button class="ghost" id="clearBtn">清空对话记录</button>
     <button class="ghost" id="resetBtn">恢复默认设置</button>
+    <button class="ghost" id="recallBtn" title="桌宠走丢时，把它移回主屏幕右下角">找回桌宠</button>
     <div class="spacer"></div>
     <button id="closeBtn">关闭</button>
     <button id="saveBtn">保存并应用</button>
