@@ -130,6 +130,7 @@ function registerIpc() {
   ipcMain.handle('config:save', (e, partial) => {
     const cfg = config.save(partial);
     broadcast('config:changed', cfg);
+    llm.warm(cfg);   // 配置变更后预热连接，降低第一条消息首字延迟
     return cfg;
   });
   ipcMain.handle('config:reset', () => {
@@ -183,6 +184,7 @@ function registerIpc() {
   });
   ipcMain.handle('llm:test', () => llm.test(config.get()));
   ipcMain.on('llm:abort', () => llm.abortAll());
+  ipcMain.on('llm:warm', () => llm.warm(config.get()));   // 渲染层打开气泡时预热连接
   ipcMain.on('chat:clear', () => {
     if (petWin && !petWin.isDestroyed()) petWin.webContents.send('chat:cleared');
   });
@@ -190,6 +192,7 @@ function registerIpc() {
 
 app.whenReady().then(async () => {
   config.load();
+  llm.warm(config.get());   // 启动即预热：提前完成 DNS/TLS 握手
   const srv = await createServer(app.getAppPath());
   baseURL = srv.url;
   registerIpc();

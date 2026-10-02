@@ -269,23 +269,39 @@ function subscribe() {
   window.pet.on('anim:play', (name) => {
     if (animNames.includes(name)) playOnce(name);
   });
-  window.pet.on('llm:chunk', ({ id, delta }) => {
+  window.pet.on('llm:chunk', ({ id, delta, kind }) => {
     const p = pendingReplies.get(id);
     if (!p) return;
-    if (p.el.classList.contains('thinking')) {
-      p.el.classList.remove('thinking');
-      p.el.textContent = '';
+    if (kind === 'reasoning') {
+      // 推理模型的思考流：淡色小字实时显示，正文开始后清掉
+      if (p.el.classList.contains('thinking')) {
+        p.el.classList.remove('thinking');
+        p.el.classList.add('reasoning');
+        p.el.textContent = '';
+      }
+      p.el.textContent += delta;
+    } else {
+      if (p.el.classList.contains('thinking') || p.el.classList.contains('reasoning')) {
+        p.el.classList.remove('thinking', 'reasoning');
+        p.el.textContent = '';
+      }
+      p.el.textContent += delta;
     }
-    p.el.textContent += delta;
     scrollLog();
   });
-  window.pet.on('llm:done', ({ id, aborted }) => {
+  window.pet.on('llm:done', ({ id, aborted, truncated, interrupted }) => {
     const p = pendingReplies.get(id);
     pendingReplies.delete(id);
     if (p) {
-      if (aborted && !p.el.textContent) p.el.textContent = '（已取消）';
-      if (p.el.textContent) history.push({ role: 'assistant', content: p.el.textContent });
-      if (history.length > 40) history = history.slice(-40);
+      const onlyReasoning = p.el.classList.contains('reasoning');
+      p.el.classList.remove('thinking', 'reasoning');
+      if (!p.el.textContent) p.el.textContent = aborted ? '（已取消）' : '（空回复）';
+      if (truncated) p.el.textContent += '\n（已达长度上限，回复被截断）';
+      else if (interrupted) p.el.textContent += '\n（回复中断，网络或服务不稳定，可重试）';
+      if (!onlyReasoning && p.el.textContent) {
+        history.push({ role: 'assistant', content: p.el.textContent });
+        if (history.length > 40) history = history.slice(-40);
+      }
     }
     chatBusy = false;
     endChat();
@@ -295,8 +311,17 @@ function subscribe() {
     pendingReplies.delete(id);
     chatBusy = false;
     if (p) {
-      p.el.classList.remove('thinking');
-      p.el.textContent = '出错了：' + message;
+      const wasReasoning = p.el.classList.contains('reasoning');
+      const partial = p.el.classList.contains('thinking') ? '' : p.el.textContent;
+      p.el.classList.remove('thinking', 'reasoning');
+      if (partial && !wasReasoning) {
+        // 已收到部分正文：保留半截内容，追加出错提示，不整段覆盖
+        p.el.textContent = partial + '\n（出错：' + message + '）';
+        history.push({ role: 'assistant', content: partial });
+        if (history.length > 40) history = history.slice(-40);
+      } else {
+        p.el.textContent = '出错了：' + message;
+      }
     }
     endChat();
   });
@@ -334,6 +359,7 @@ function openBubble() {
   bubbleOpen = true;
   clearTimeout(hideTimer);
   bubbleEl.classList.remove('hidden');
+  if (window.pet.warmChat) window.pet.warmChat();   // 打开气泡即预热连接，抢在输入完成前完成握手
   setTimeout(() => chatinEl.focus(), 60);
 }
 

@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('pet', {
   chat: (messages) => ipcRenderer.invoke('llm:chat', messages),
   chatTest: () => ipcRenderer.invoke('llm:test'),
   chatAbort: () => ipcRenderer.send('llm:abort'),
+  warmChat: () => ipcRenderer.send('llm:warm'),
   clearChat: () => ipcRenderer.send('chat:clear'),
   // 事件订阅（白名单）
   on: (channel, cb) => {
