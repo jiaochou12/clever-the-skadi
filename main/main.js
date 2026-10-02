@@ -115,7 +115,20 @@ function startWalkLoop() {
     const cfg = config.get();
     const [x, y] = petWin.getPosition();
     const step = Math.max(1, Math.round((Number(cfg.model.speed) || 90) * WALK_TICK / 1000));
-    // 无边界：一路走到动画停止为止，不再折返
+    // 边界判断：用模型自身可见像素的屏幕绝对坐标（窗口位置 + 窗口内包围盒）
+    // 对照模型所在屏幕的分辨率；到边即折返，本拍不再前进。多显示器按模型所在屏计算
+    const mr = petState.modelRect;
+    const b = screen.getDisplayNearestPoint({ x: x + Math.round(PET_W / 2), y: y + Math.round(PET_H / 2) }).bounds;
+    if (mr && mr.w > 0) {
+      const modelLeft = x + mr.x;
+      const modelRight = x + mr.x + mr.w;
+      if (walkDir > 0 && modelRight >= b.x + b.width) { flipWalk(-1); return; }
+      if (walkDir < 0 && modelLeft <= b.x) { flipWalk(1); return; }
+    } else {
+      // 包围盒未上报时退回用窗口边界判断
+      if (walkDir > 0 && x + PET_W >= b.x + b.width) { flipWalk(-1); return; }
+      if (walkDir < 0 && x <= b.x) { flipWalk(1); return; }
+    }
     petWin.setPosition(x + walkDir * step, y);
   }, WALK_TICK);
 }

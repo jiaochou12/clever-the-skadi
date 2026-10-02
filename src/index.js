@@ -88,7 +88,13 @@ function buildApp() {
     if (!spine) return;
     if (++rectTick % 30 === 0) {
       const b = spine.getBounds(true);
-      modelRect = { x: b.x, y: b.y, w: b.width, h: b.height };
+      const next = { x: b.x, y: b.y, w: b.width, h: b.height };
+      const m = modelRect;
+      // 包围盒变化时上报主进程：走路折返需要模型自身可见像素在屏幕上的绝对位置
+      if (!m || m.x !== next.x || m.y !== next.y || m.w !== next.w || m.h !== next.h) {
+        modelRect = next;
+        window.pet.setState({ modelRect: next });
+      }
       positionBubble();
     }
   });
@@ -172,6 +178,7 @@ function applyScale() {
   );
   const b2 = spine.getBounds(true);
   modelRect = { x: b2.x, y: b2.y, w: b2.width, h: b2.height };
+  window.pet.setState({ modelRect: modelRect });   // 朝向/缩放变化立即同步，保证折返判断及时
   positionBubble();
 }
 
