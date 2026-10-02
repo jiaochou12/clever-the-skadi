@@ -27,6 +27,8 @@ function defaults() {
       color: '#333333',
       opacity: 0.92,
       fontSize: 15,
+      width: 440,         // 气泡宽度 px（260 ~ 460）
+      height: 160,        // 消息区最大高度 px（100 ~ 400）
       autoHideSec: 30     // 0 = 不自动隐藏
     }
   };
@@ -51,6 +53,13 @@ function file() {
 
 let cfg = null;
 
+// 数值字段兜底钳制（防手改 config.json 出非法值）
+function sanitize() {
+  const b = cfg.bubble;
+  b.width = Math.min(460, Math.max(260, Number(b.width) || 440));
+  b.height = Math.min(400, Math.max(100, Number(b.height) || 160));
+}
+
 function load() {
   cfg = defaults();
   let raw = null;
@@ -71,6 +80,7 @@ function load() {
   }
   delete cfg.model.mode;
   delete cfg.model.anims;
+  sanitize();
   return cfg;
 }
 
@@ -82,6 +92,7 @@ function get() {
 function save(partial) {
   if (!cfg) load();
   deepMerge(cfg, partial || {});
+  sanitize();
   try {
     fs.mkdirSync(path.dirname(file()), { recursive: true });
     fs.writeFileSync(file(), JSON.stringify(cfg, null, 2), 'utf-8');

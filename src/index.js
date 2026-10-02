@@ -326,6 +326,8 @@ function applyBubbleStyle() {
   bubbleEl.style.setProperty('--fg', b.color);
   bubbleEl.style.setProperty('--op', b.opacity);
   bubbleEl.style.setProperty('--fs', b.fontSize + 'px');
+  bubbleEl.style.setProperty('--w', b.width + 'px');
+  bubbleEl.style.setProperty('--h', b.height + 'px');
 }
 
 function openBubble() {

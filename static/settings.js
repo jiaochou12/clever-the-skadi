@@ -27,6 +27,8 @@ const fields = {
   scale: $('scale'),
   bg: $('bg'),
   color: $('color'),
+  bubbleWidth: $('bubbleWidth'),
+  bubbleHeight: $('bubbleHeight'),
   opacity: $('opacity'),
   fontSize: $('fontSize'),
   autoHideSec: $('autoHideSec')
@@ -95,6 +97,10 @@ async function load() {
 
   fillValue('bg', cfg.bubble.bg);
   fillValue('color', cfg.bubble.color);
+  fillValue('bubbleWidth', cfg.bubble.width);
+  showVal('bubbleWidth', cfg.bubble.width + 'px');
+  fillValue('bubbleHeight', cfg.bubble.height);
+  showVal('bubbleHeight', cfg.bubble.height + 'px');
   fillValue('opacity', Math.round(cfg.bubble.opacity * 100));
   showVal('opacity', Math.round(cfg.bubble.opacity * 100) + '%');
   fillValue('fontSize', cfg.bubble.fontSize);
@@ -126,6 +132,8 @@ function collect() {
     bubble: {
       bg: fields.bg.value,
       color: fields.color.value,
+      width: Number(fields.bubbleWidth.value),
+      height: Number(fields.bubbleHeight.value),
       opacity: Number(fields.opacity.value) / 100,
       fontSize: Number(fields.fontSize.value),
       autoHideSec: Number(fields.autoHideSec.value)
@@ -134,7 +142,7 @@ function collect() {
 }
 
 // 滑块：轨道按当前值填充，数值实时显示
-const RANGE_IDS = ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec', 'randomMinSec', 'randomMaxSec'];
+const RANGE_IDS = ['temperature', 'speed', 'scale', 'opacity', 'fontSize', 'autoHideSec', 'randomMinSec', 'randomMaxSec', 'bubbleWidth', 'bubbleHeight'];
 
 function paintRange(id) {
   const el = fields[id];
@@ -155,7 +163,7 @@ for (const id of RANGE_IDS) {
     if (id === 'speed') showVal(id, v + ' px/s');
     else if (id === 'scale') showVal(id, Math.round(v * 100) + '%');
     else if (id === 'opacity') showVal(id, v + '%');
-    else if (id === 'fontSize') showVal(id, v + 'px');
+    else if (id === 'fontSize' || id === 'bubbleWidth' || id === 'bubbleHeight') showVal(id, v + 'px');
     else if (id === 'autoHideSec') showVal(id, v === 0 ? '不隐藏' : v + 's');
     else if (id === 'randomMinSec' || id === 'randomMaxSec') showVal(id, v + 's');
     else showVal(id, v);

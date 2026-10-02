@@ -40,13 +40,15 @@ html, body {
   --fg: #333333;
   --op: 0.92;
   --fs: 15px;
+  --w: 440px;   /* 气泡宽度（设置窗口可调，260~460） */
+  --h: 160px;   /* 消息区最大高度（设置窗口可调，100~400） */
 
   position: absolute;
   bottom: 140px;
   left: 50%;
   transform: translateX(-50%);
-  width: 92%;
-  max-width: 440px;
+  width: var(--w);
+  max-width: 96%;
   background: var(--bg);
   color: var(--fg);
   opacity: var(--op);
@@ -77,7 +79,7 @@ html, body {
 }
 
 #chatlog {
-  max-height: 160px;
+  max-height: var(--h);
   overflow-y: auto;
   user-select: text;
   word-break: break-word;
